@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kornettøving</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0f141b;
+    --ink-2:#1a222c;
+    --ink-3:#232d39;
+    --brass:#c99a44;
+    --brass-light:#eccd8a;
+    --brass-dark:#8a6a2c;
+    --paper:#f1e8d6;
+    --paper-2:#e8dcc2;
+    --ink-text:#2c2013;
+    --muted:#8a94a3;
+    --muted-2:#5b6472;
+    --green:#2ecc71;
+    --green-glow:rgba(46,204,113,.85);
+    --red:#ff4d4d;
+    --red-glow:rgba(255,77,77,.85);
+    --radius:18px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse 900px 500px at 50% -10%, #24303d 0%, transparent 60%),
+      linear-gradient(180deg,var(--ink) 0%, #0b0f14 100%);
+    color:var(--paper);
+    font-family:'Inter',system-ui,sans-serif;
+    display:flex;
+    justify-content:center;
+    padding:28px 16px 60px;
+  }
+  .wrap{width:100%;max-width:640px;}
+
+  /* ---------- HEADER ---------- */
+  header{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:14px;
+    margin-bottom:22px;
+    flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-mark{
+    width:40px;height:40px;border-radius:50%;
+    background:radial-gradient(circle at 32% 28%, var(--brass-light), var(--brass) 55%, var(--brass-dark) 100%);
+    box-shadow:0 2px 10px rgba(0,0,0,.4), inset 0 -2px 4px rgba(0,0,0,.25);
+    flex-shrink:0;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:0;
+    letter-spacing:.2px;
+  }
+  h1 span{color:var(--brass-light);font-style:italic;font-weight:400;}
+  .sub{font-size:12.5px;color:var(--muted);margin-top:2px;}
+
+  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  select{
+    background:var(--ink-3);
+    color:var(--paper);
+    border:1px solid #33404e;
+    border-radius:10px;
+    padding:9px 10px;
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+  }
+  button{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:13.5px;
+    border:none;
+    border-radius:10px;
+    padding:10px 16px;
+    cursor:pointer;
+    transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+  }
+  button:active{transform:scale(.96);}
+  button:disabled{opacity:.4;cursor:not-allowed;}
+  .btn-start{
+    background:linear-gradient(180deg,var(--brass-light),var(--brass) 70%);
+    color:#2c2013;
+    box-shadow:0 3px 12px rgba(201,154,68,.35);
+  }
+  .btn-stop{
+    background:var(--ink-3);
+    color:var(--paper);
+    border:1px solid #3a4753;
+  }
+  .btn-skip{
+    background:transparent;
+    color:var(--muted);
+    border:1px solid #3a4753;
+    padding:7px 12px;
+    font-size:12.5px;
+  }
+
+  /* ---------- STAND / CARD ---------- */
+  .stand{
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:16px;
+  }
+  .lamp{
+    width:24px;height:24px;border-radius:50%;
+    background:#3a4551;
+    box-shadow:inset 0 2px 3px rgba(0,0,0,.5);
+    flex-shrink:0;
+    transition:background .12s ease, box-shadow .12s ease;
+  }
+  .lamp.green{background:var(--green);box-shadow:0 0 26px 10px var(--green-glow), inset 0 1px 2px rgba(0,0,0,.3);animation:lampPulse .55s ease;}
+  .lamp.red{background:var(--red);box-shadow:0 0 26px 10px var(--red-glow), inset 0 1px 2px rgba(0,0,0,.3);animation:lampPulse .4s ease;}
+  @keyframes lampPulse{
+    0%{transform:scale(1);}
+    35%{transform:scale(1.35);}
+    100%{transform:scale(1);}
+  }
+
+  .card{
+    position:relative;
+    flex:1;
+    background:linear-gradient(180deg,var(--paper),var(--paper-2));
+    border-radius:var(--radius);
+    padding:26px 18px 18px;
+    box-shadow:
+      0 18px 40px rgba(0,0,0,.45),
+      0 0 0 1px rgba(0,0,0,.06);
+    transition:box-shadow .18s ease;
+  }
+  .card.feedback-green{
+    background:
+      linear-gradient(180deg, rgba(46,204,113,.30), rgba(46,204,113,.14)),
+      linear-gradient(180deg,var(--paper),var(--paper-2));
+    box-shadow:0 18px 40px rgba(0,0,0,.45), 0 0 0 7px var(--green), 0 0 60px 14px var(--green-glow);
+    animation:pulseGreen .5s ease;
+  }
+  .card.feedback-red{
+    background:
+      linear-gradient(180deg, rgba(255,77,77,.30), rgba(255,77,77,.14)),
+      linear-gradient(180deg,var(--paper),var(--paper-2));
+    box-shadow:0 18px 40px rgba(0,0,0,.45), 0 0 0 7px var(--red), 0 0 60px 14px var(--red-glow);
+    animation:shakeRed .45s ease;
+  }
+  @keyframes pulseGreen{
+    0%{transform:scale(1);}
+    30%{transform:scale(1.035);}
+    100%{transform:scale(1);}
+  }
+  @keyframes shakeRed{
+    0%,100%{transform:translateX(0);}
+    20%{transform:translateX(-9px);}
+    40%{transform:translateX(8px);}
+    60%{transform:translateX(-6px);}
+    80%{transform:translateX(5px);}
+  }
+
+  .feedback-icon{
+    position:absolute;
+    top:50%;left:50%;
+    transform:translate(-50%,-50%) scale(.3);
+    font-size:130px;
+    font-weight:800;
+    line-height:1;
+    opacity:0;
+    pointer-events:none;
+    z-index:6;
+    transition:opacity .12s ease, transform .3s cubic-bezier(.34,1.56,.64,1);
+  }
+  .feedback-icon.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
+  .feedback-icon.green{color:var(--green);text-shadow:0 0 40px rgba(46,204,113,.9), 0 0 10px rgba(0,0,0,.15);}
+  .feedback-icon.red{color:var(--red);text-shadow:0 0 40px rgba(255,77,77,.9), 0 0 10px rgba(0,0,0,.15);}
+
+  .screen-flash{
+    position:fixed;inset:0;pointer-events:none;z-index:9999;
+    opacity:0;transition:opacity .09s ease;
+  }
+  .screen-flash.show{opacity:1;transition:opacity .04s ease;}
+  .screen-flash.green{background:radial-gradient(ellipse at 50% 40%, transparent 35%, rgba(46,204,113,.30) 100%);}
+  .screen-flash.red{background:radial-gradient(ellipse at 50% 40%, transparent 35%, rgba(255,77,77,.32) 100%);}
+  .clip{
+    position:absolute;
+    top:-11px;left:50%;transform:translateX(-50%);
+    width:46px;height:22px;
+    background:linear-gradient(180deg,var(--brass-light),var(--brass-dark));
+    border-radius:5px;
+    box-shadow:0 3px 8px rgba(0,0,0,.4);
+  }
+  .clip::after{
+    content:"";position:absolute;left:50%;top:50%;
+    width:9px;height:9px;border-radius:50%;
+    background:#2c2013;transform:translate(-50%,-50%);
+    box-shadow:inset 0 1px 2px rgba(0,0,0,.6);
+  }
+
+  svg.staff{width:100%;height:auto;display:block;}
+  .staff-line{stroke:var(--ink-text);stroke-width:1.6;}
+  .clef{font-family:'Fraunces',serif;fill:var(--ink-text);}
+  .notehead{fill:var(--ink-text);}
+  .ledger{stroke:var(--ink-text);stroke-width:1.6;}
+  .accidental{fill:var(--ink-text);font-family:'Fraunces',serif;}
+
+  .name-row{
+    display:flex;align-items:baseline;justify-content:center;
+    gap:10px;margin-top:8px;
+  }
+  .note-name{
+    font-family:'Fraunces',serif;font-weight:700;font-size:34px;color:var(--ink-text);
+  }
+  .note-name sub{font-size:16px;font-weight:600;position:relative;bottom:-2px;}
+  .note-name-alt{font-size:13px;color:#6b5d47;font-family:'JetBrains Mono',monospace;}
+
+  /* ---------- TIMER / TUNER ---------- */
+  .meta-row{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-top:18px;gap:14px;flex-wrap:wrap;
+  }
+  .timer{
+    font-family:'JetBrains Mono',monospace;
+    font-size:30px;font-weight:700;
+    color:var(--brass-light);
+    letter-spacing:.5px;
+  }
+  .timer span{font-size:14px;color:var(--muted);font-weight:500;margin-left:4px;}
+
+  .tuner{flex:1;min-width:160px;max-width:260px;}
+  .tuner-track{
+    position:relative;height:6px;border-radius:3px;
+    background:var(--ink-3);overflow:visible;
+  }
+  .tuner-mid{position:absolute;left:50%;top:-3px;width:2px;height:12px;background:#3a4753;}
+  .tuner-dot{
+    position:absolute;top:-5px;width:12px;height:12px;border-radius:50%;
+    background:var(--muted);transform:translateX(-50%);
+    transition:left .08s linear, background .12s ease;
+    left:50%;
+  }
+  .tuner-label{font-size:11px;color:var(--muted);margin-top:6px;text-align:center;}
+
+  .mic-level{
+    display:flex;align-items:center;gap:6px;
+  }
+  .mic-bar{width:44px;height:6px;border-radius:3px;background:var(--ink-3);overflow:hidden;}
+  .mic-bar i{display:block;height:100%;width:0%;background:var(--brass);transition:width .08s linear;}
+
+  /* ---------- SESSION / GOAL ---------- */
+  .goal-card{
+    margin-top:20px;
+    background:var(--ink-2);border:1px solid #263140;
+    border-radius:14px;padding:16px 18px;
+  }
+  .goal-top{
+    display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap;
+  }
+  .goal-label{font-size:12px;color:var(--muted);}
+  .goal-time{
+    font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;color:var(--paper);
+    margin-top:2px;
+  }
+  .goal-time span{font-size:14px;color:var(--muted);font-weight:500;}
+  .goal-session{
+    text-align:right;font-size:12px;color:var(--muted);
+  }
+  .goal-session b{
+    display:block;font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;
+  }
+  .goal-session b.active{color:var(--green);}
+  .goal-session b.paused{color:var(--brass-light);}
+  .goal-bar-fill.paused{
+    background:repeating-linear-gradient(45deg, var(--ink-3), var(--ink-3) 8px, #2b3644 8px, #2b3644 16px);
+  }
+  .goal-msg.paused{color:var(--brass-light);font-weight:600;}
+  .goal-bar-track{
+    margin-top:12px;height:12px;border-radius:6px;background:var(--ink-3);overflow:hidden;
+    border:1px solid #2a3644;
+  }
+  .goal-bar-fill{
+    height:100%;width:0%;border-radius:6px;
+    background:linear-gradient(90deg,var(--brass-dark),var(--brass-light));
+    transition:width .3s ease, background .3s ease;
+  }
+  .goal-bar-fill.reached{
+    background:linear-gradient(90deg,#1d8f4f,var(--green));
+    box-shadow:0 0 14px 2px var(--green-glow);
+    animation:goalReachedPulse 2.2s ease-in-out infinite;
+  }
+  @keyframes goalReachedPulse{
+    0%,100%{box-shadow:0 0 14px 2px var(--green-glow);}
+    50%{box-shadow:0 0 20px 5px var(--green-glow);}
+  }
+  .goal-msg{margin-top:8px;font-size:12.5px;color:var(--muted);}
+  .goal-msg.reached{color:var(--green);font-weight:600;}
+
+  /* ---------- STATS ---------- */
+  .stats{
+    display:grid;grid-template-columns:repeat(3,1fr);
+    gap:10px;margin-top:14px;
+  }
+  .stat{
+    background:var(--ink-2);border:1px solid #263140;
+    border-radius:12px;padding:12px 10px;text-align:center;
+  }
+  .stat b{display:block;font-family:'JetBrains Mono',monospace;font-size:19px;color:var(--brass-light);}
+  .stat span{font-size:11px;color:var(--muted);}
+
+  .history{
+    display:flex;gap:6px;flex-wrap:wrap;margin-top:14px;min-height:26px;
+  }
+  .chip{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;padding:4px 8px;border-radius:20px;
+    background:var(--ink-2);border:1px solid #2a3644;color:var(--muted);
+  }
+  .chip.ok{border-color:var(--green);color:var(--green);}
+
+  /* ---------- DAY HISTORY ---------- */
+  .day-history{
+    margin-top:26px;
+  }
+  .day-history h2{
+    font-family:'Fraunces',serif;font-weight:600;font-size:16px;margin:0 0 10px;color:var(--paper);
+  }
+  .day-history h2 span{font-size:12px;color:var(--muted);font-family:'Inter',sans-serif;font-weight:400;margin-left:6px;}
+  .day-row{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:9px 4px;border-bottom:1px solid #202a35;
+    font-size:13px;
+  }
+  .day-row:last-child{border-bottom:none;}
+  .day-date{color:var(--paper);display:flex;align-items:center;gap:8px;}
+  .day-date b{font-weight:600;}
+  .day-date small{color:var(--muted);font-weight:400;}
+  .day-goal-dot{
+    width:8px;height:8px;border-radius:50%;background:var(--ink-3);flex-shrink:0;
+  }
+  .day-goal-dot.hit{background:var(--green);box-shadow:0 0 6px 1px var(--green-glow);}
+  .day-right{
+    display:flex;align-items:center;gap:12px;
+    font-family:'JetBrains Mono',monospace;color:var(--muted);
+  }
+  .day-right b{color:var(--brass-light);font-weight:600;}
+  .day-empty{font-size:12.5px;color:var(--muted);padding:6px 4px;}
+
+  .status-msg{
+    text-align:center;margin-top:16px;font-size:13.5px;color:var(--muted);
+    min-height:18px;
+  }
+  .status-msg.warn{color:var(--red-light,#e88b81);}
+
+  footer{
+    margin-top:30px;font-size:12px;line-height:1.6;color:var(--muted-2);
+    border-top:1px solid #232d39;padding-top:16px;
+  }
+  footer b{color:var(--muted);}
+
+  @media (max-width:480px){
+    .note-name{font-size:28px;}
+    .timer{font-size:24px;}
+    h1{font-size:21px;}
+  }
+</style>
+</head>
+<body>
+<div class="screen-flash" id="screenFlash"></div>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div>
+        <h1>Kornett<span>øving</span></h1>
+        <div class="sub">Les noten. Spill tonen. Bli grønn.</div>
+      </div>
+    </div>
+    <div class="controls">
+      <select id="levelSelect">
+        <option value="lett">Lett · C�G</option>
+        <option value="middels" selected>Middels · C4�C5</option>
+        <option value="avansert">Avansert · med kryss</option>
+      </select>
+      <button id="startBtn" class="btn-start">Start øving</button>
+      <button id="stopBtn" class="btn-stop" disabled>Avslutt</button>
+    </div>
+  </header>
+
+  <div class="stand">
+    <div class="lamp" id="lamp"></div>
+    <div class="card" id="card">
+      <div class="clip"></div>
+      <div class="feedback-icon" id="feedbackIcon"></div>
+      <svg class="staff" id="staffSvg" viewBox="0 0 600 190"></svg>
+      <div class="name-row">
+        <div class="note-name" id="noteName">�</div>
+      </div>
+      <div class="note-name-alt" id="noteAlt" style="text-align:center;margin-top:2px;">Trykk «Start øving» og gi mikrofon-tilgang</div>
+    </div>
+  </div>
+
+  <div class="meta-row">
+    <div class="timer" id="timer">0.0<span>sek</span></div>
+    <div class="mic-level">
+      <span style="font-size:11px;color:var(--muted);">mik.</span>
+      <div class="mic-bar"><i id="micBar"></i></div>
+    </div>
+    <div class="tuner">
+      <div class="tuner-track">
+        <div class="tuner-mid"></div>
+        <div class="tuner-dot" id="tunerDot"></div>
+      </div>
+      <div class="tuner-label" id="tunerLabel">stemming</div>
+    </div>
+  </div>
+
+  <button class="btn-skip" id="skipBtn" style="display:none;margin-top:14px;">Hopp over denne tonen �</button>
+
+  <div class="goal-card">
+    <div class="goal-top">
+      <div>
+        <div class="goal-label">�ktens øvingstid <span style="color:var(--muted-2);">(minimum: 5 min)</span></div>
+        <div class="goal-time" id="goalTime">0:00<span> / 5:00</span></div>
+      </div>
+      <div class="goal-session">
+        Status
+        <b id="sessionStatus">�</b>
+      </div>
+    </div>
+    <div class="goal-bar-track"><div class="goal-bar-fill" id="goalBarFill"></div></div>
+    <div class="goal-msg" id="goalMsg">Start øving for å begynne å telle øktens tid.</div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><b id="statCount">0</b><span>toner riktig</span></div>
+    <div class="stat"><b id="statAvg">�</b><span>snitt-tid</span></div>
+    <div class="stat"><b id="statBest">�</b><span>beste tid</span></div>
+  </div>
+
+  <div class="history" id="noteHistory"></div>
+  <div class="status-msg" id="statusMsg"></div>
+
+  <div class="day-history">
+    <h2>�vingshistorikk <span>siste 14 dager</span></h2>
+    <div id="dayHistoryList"></div>
+  </div>
+
+  <footer>
+    <b>Slik virker det:</b> Kornett er et Bb-instrument � tonen som klinger er et heltrinn lavere enn den som skrives. Notebildet viser skrevet tone, og appen lytter etter den faktiske klingende tonen fra mikrofonen. Lampen lyser grønt når riktig tone holdes stabilt, rødt ved feil tone. Neste note kommer automatisk. Fungerer best i Chrome, i et rolig rom, med mikrofontilgang tillatt.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- NOTE DATA ----------
+  var SEMITONE = {C:0,"C#":1,D:2,"D#":3,E:4,F:5,"F#":6,G:7,"G#":8,A:9,"A#":10,B:11};
+  var LETTER_IDX = {C:0,D:1,E:2,F:3,G:4,A:5,B:6};
+  var NOTE_NAMES_NO = ["C","Ciss","D","Diss","E","F","Fiss","G","Giss","A","B","H"];
+
+  function parseNote(str){
+    var m = str.match(/^([A-G])(#?)(\d)$/);
+    var letter = m[1], sharp = m[2] === "#", octave = parseInt(m[3],10);
+    var pc = SEMITONE[letter + (sharp?"#":"")];
+    var midi = (octave+1)*12 + pc;
+    var value = octave*7 + LETTER_IDX[letter];
+    var diatonicStep = value - 30; // E4 bottom line = 0
+    return {letter:letter, sharp:sharp, octave:octave, midi:midi, diatonicStep:diatonicStep, raw:str};
+  }
+
+  var LEVELS = {
+    lett: ["C4","D4","E4","F4","G4"],
+    middels: ["C4","D4","E4","F4","G4","A4","B4","C5"],
+    avansert: ["G3","A3","B3","C4","C#4","D4","D#4","E4","F4","F#4","G4","G#4","A4","A#4","B4","C5","C#5","D5"]
+  };
+
+  function norwegianName(midi){
+    var pc = ((midi % 12) + 12) % 12;
+    return NOTE_NAMES_NO[pc];
+  }
+  function englishName(note){
+    return note.letter + (note.sharp?"#":"") + note.octave;
+  }
+
+  // ---------- STAFF DRAWING ----------
+  var svgNS = "http://www.w3.org/2000/svg";
+  var staffSvg = document.getElementById("staffSvg");
+  var LINE_Y = [60,78,96,114,132]; // top(F5) .. bottom(E4)
+  var STEP_PX = 9; // per diatonic step
+  var BASE_Y = 132; // step 0 = E4
+
+  function clearSvg(){ while(staffSvg.firstChild) staffSvg.removeChild(staffSvg.firstChild); }
+  function el(name, attrs){
+    var e = document.createElementNS(svgNS, name);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+
+  function drawStaff(){
+    clearSvg();
+    for (var i=0;i<LINE_Y.length;i++){
+      staffSvg.appendChild(el("line",{x1:70,x2:560,y1:LINE_Y[i],y2:LINE_Y[i],class:"staff-line"}));
+    }
+    var clef = el("text",{x:78,y:150,"font-size":86,class:"clef"});
+    clef.textContent = "𝄞"; // treble clef
+    staffSvg.appendChild(clef);
+  }
+
+  function ledgerSteps(step){
+    var steps = [];
+    if (step <= -2){
+      for (var s=-2; s>=step; s-=2) steps.push(s);
+    } else if (step >= 10){
+      for (var s2=10; s2<=step; s2+=2) steps.push(s2);
+    }
+    return steps;
+  }
+
+  function drawNote(note){
+    // remove previous notehead/ledger/accidental group
+    var old = staffSvg.querySelector("#noteGroup");
+    if (old) staffSvg.removeChild(old);
+    var g = el("g",{id:"noteGroup"});
+    var cx = 320;
+    var y = BASE_Y - note.diatonicStep * STEP_PX;
+
+    var ledgers = ledgerSteps(note.diatonicStep);
+    ledgers.forEach(function(s){
+      var ly = BASE_Y - s*STEP_PX;
+      g.appendChild(el("line",{x1:cx-22,x2:cx+22,y1:ly,y2:ly,class:"ledger"}));
+    });
+
+    if (note.sharp){
+      var acc = el("text",{x:cx-34,y:y+7,"font-size":26,class:"accidental"});
+      acc.textContent = "♯";
+      g.appendChild(acc);
+    }
+
+    g.appendChild(el("ellipse",{cx:cx,cy:y,rx:11,ry:8,class:"notehead",transform:"rotate(-18 "+cx+" "+y+")"}));
+
+    // stem
+    var stemUp = note.diatonicStep < 4;
+    var stemX = stemUp ? cx+10.5 : cx-10.5;
+    var stemY1 = y;
+    var stemY2 = stemUp ? y-46 : y+46;
+    g.appendChild(el("line",{x1:stemX,x2:stemX,y1:stemY1,y2:stemY2,stroke:"var(--ink-text)","stroke-width":1.8}));
+
+    staffSvg.appendChild(g);
+  }
+
+  // ---------- STATE ----------
+  var state = {
+    level: "middels",
+    pool: LEVELS.middels,
+    current: null,
+    targetMidi: null,
+    noteStart: 0,
+    timerInt: null,
+    resolved: false,
+    lastWrongFlash: 0,
+    detectHistory: [],
+    audioCtx: null,
+    analyser: null,
+    stream: null,
+    detectInt: null,
+    stats: {count:0, totalTime:0, best:null},
+    lastMidiPlayed: null
+  };
+
+  var noteNameEl = document.getElementById("noteName");
+  var noteAltEl = document.getElementById("noteAlt");
+  var lampEl = document.getElementById("lamp");
+  var cardEl = document.getElementById("card");
+  var feedbackIcon = document.getElementById("feedbackIcon");
+  var screenFlash = document.getElementById("screenFlash");
+
+  function triggerScreenFlash(color){
+    screenFlash.className = "screen-flash show " + color;
+    setTimeout(function(){ screenFlash.className = "screen-flash"; }, 260);
+  }
+  function showIcon(color, symbol, holdMs){
+    feedbackIcon.textContent = symbol;
+    feedbackIcon.className = "feedback-icon show " + color;
+    setTimeout(function(){ feedbackIcon.className = "feedback-icon " + color; }, holdMs);
+  }
+  function hideIcon(){
+    feedbackIcon.className = "feedback-icon";
+  }
+  var timerEl = document.getElementById("timer");
+  var micBar = document.getElementById("micBar");
+  var tunerDot = document.getElementById("tunerDot");
+  var tunerLabel = document.getElementById("tunerLabel");
+  var statusMsg = document.getElementById("statusMsg");
+  var statCount = document.getElementById("statCount");
+  var statAvg = document.getElementById("statAvg");
+  var statBest = document.getElementById("statBest");
+  var historyEl = document.getElementById("noteHistory");
+  var skipBtn = document.getElementById("skipBtn");
+  var startBtn = document.getElementById("startBtn");
+  var stopBtn = document.getElementById("stopBtn");
+  var levelSelect = document.getElementById("levelSelect");
+  var goalTimeEl = document.getElementById("goalTime");
+  var sessionStatusEl = document.getElementById("sessionStatus");
+  var goalBarFill = document.getElementById("goalBarFill");
+  var goalMsgEl = document.getElementById("goalMsg");
+  var dayHistoryListEl = document.getElementById("dayHistoryList");
+
+  // ---------- STORAGE / DAILY HISTORY ----------
+  var STORAGE_KEY = "kornettoving_history_v1";
+  var storageAvailable = true;
+  try { localStorage.setItem("__kornett_test__","1"); localStorage.removeItem("__kornett_test__"); }
+  catch(e){ storageAvailable = false; }
+  var memoryHistory = {};
+
+  var WEEKDAYS_NO = ["søn","man","tir","ons","tor","fre","lør"];
+  var MONTHS_NO = ["jan","feb","mar","apr","mai","jun","jul","aug","sep","okt","nov","des"];
+
+  function pad2(n){ return (n<10?"0":"") + n; }
+  function formatMMSS(totalSeconds){
+    var s = Math.max(0, Math.floor(totalSeconds));
+    var m = Math.floor(s/60), sec = s%60;
+    return m + ":" + pad2(sec);
+  }
+  function todayKeyStr(offsetDays){
+    var d = new Date();
+    if (offsetDays) d.setDate(d.getDate() + offsetDays);
+    return d.getFullYear() + "-" + pad2(d.getMonth()+1) + "-" + pad2(d.getDate());
+  }
+  function loadHistory(){
+    if (!storageAvailable) return memoryHistory;
+    try{ var raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : {}; }
+    catch(e){ return memoryHistory; }
+  }
+  function persistHistoryData(data){
+    if (!storageAvailable){ memoryHistory = data; return; }
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+    catch(e){ memoryHistory = data; }
+  }
+  function dateLabel(key){
+    var parts = key.split("-").map(Number);
+    var d = new Date(parts[0], parts[1]-1, parts[2]);
+    if (key === todayKeyStr(0)) return "I dag";
+    if (key === todayKeyStr(-1)) return "I går";
+    return WEEKDAYS_NO[d.getDay()] + " " + parts[2] + "." + MONTHS_NO[parts[1]-1];
+  }
+  function storageWarningSuffix(){
+    return storageAvailable ? "" : " (Historikken lagres kun i denne visningen. �pne den nedlastede filen direkte i nettleseren for at den skal huskes til neste dag.)";
+  }
+
+  function renderDayHistory(){
+    var data = loadHistory();
+    var keys = Object.keys(data).sort().reverse().slice(0,14);
+    dayHistoryListEl.innerHTML = "";
+    if (!keys.length){
+      dayHistoryListEl.innerHTML = '<div class="day-empty">Ingen økter registrert ennå. Trykk «Start øving» for å begynne å bygge historikk.</div>';
+      return;
+    }
+    keys.forEach(function(k){
+      var sessions = data[k] || [];
+      var bestSeconds = 0, totalNotes = 0;
+      sessions.forEach(function(s){
+        if (s.seconds > bestSeconds) bestSeconds = s.seconds;
+        totalNotes += s.notes || 0;
+      });
+      var hit = bestSeconds >= GOAL_SECONDS;
+      var row = document.createElement("div");
+      row.className = "day-row";
+      var sessionWord = sessions.length === 1 ? "økt" : "økter";
+      row.innerHTML =
+        '<div class="day-date"><span class="day-goal-dot' + (hit?' hit':'') + '"></span><b>' + dateLabel(k) + '</b> <small>· ' + sessions.length + ' ' + sessionWord + '</small></div>' +
+        '<div class="day-right"><span>' + totalNotes + ' toner</span><b>beste ' + formatMMSS(bestSeconds) + '</b></div>';
+      dayHistoryListEl.appendChild(row);
+    });
+  }
+
+  // ---------- PER-�KT TIMER MED AUTO-PAUSE ----------
+  var GOAL_SECONDS = 300; // 5 min minimum pr økt
+  var INACTIVITY_LIMIT = 30; // sek uten spilt tone før pause
+  var goalTickInt = null;
+  var sessionActiveSeconds = 0;   // faktisk telte (upausede) sekunder denne økten
+  var lastActivityTs = null;      // performance.now() for siste registrerte tone
+  var isPaused = false;
+  var sessionLoggedThisRun = false;
+
+  function markActivity(){
+    lastActivityTs = performance.now();
+    if (isPaused){
+      isPaused = false;
+    }
+  }
+
+  function updateGoalDisplay(){
+    var reachedGoal = sessionActiveSeconds >= GOAL_SECONDS;
+    goalTimeEl.innerHTML = reachedGoal
+      ? formatMMSS(sessionActiveSeconds)
+      : formatMMSS(sessionActiveSeconds) + "<span> / 5:00 min.</span>";
+    var pct = Math.min(100, (sessionActiveSeconds/GOAL_SECONDS)*100);
+    goalBarFill.style.width = pct + "%";
+
+    if (isPaused){
+      sessionStatusEl.textContent = "� Pause";
+      sessionStatusEl.className = "paused";
+      goalBarFill.classList.remove("reached");
+      goalBarFill.classList.add("paused");
+      goalMsgEl.className = "goal-msg paused";
+      goalMsgEl.textContent = "� Pause � ingen tone spilt på " + INACTIVITY_LIMIT + " sek. Spill en tone for å fortsette.";
+      return;
+    }
+    goalBarFill.classList.remove("paused");
+    sessionStatusEl.textContent = "� Aktiv";
+    sessionStatusEl.className = "active";
+    if (reachedGoal){
+      goalBarFill.classList.add("reached");
+      goalMsgEl.className = "goal-msg reached";
+      goalMsgEl.textContent = "� Minimum på 5 min er nådd � teller fortsetter så lenge dere øver." + storageWarningSuffix();
+    } else {
+      goalBarFill.classList.remove("reached");
+      goalMsgEl.className = "goal-msg";
+      goalMsgEl.textContent = "Litt igjen av dagens økt (" + formatMMSS(GOAL_SECONDS - sessionActiveSeconds) + " igjen)." + storageWarningSuffix();
+    }
+  }
+
+  function logSessionToHistory(){
+    if (sessionActiveSeconds < 1) return; // ikke logg tomme økter
+    var data = loadHistory();
+    var key = todayKeyStr(0);
+    if (!data[key]) data[key] = [];
+    var entry = {seconds: Math.round(sessionActiveSeconds), notes: state.stats.count, ts: Date.now()};
+    if (!sessionLoggedThisRun){
+      data[key].push(entry);
+      sessionLoggedThisRun = true;
+    } else {
+      // oppdater siste logg-post for denne økten i stedet for å legge til flere
+      data[key][data[key].length - 1] = entry;
+    }
+    persistHistoryData(data);
+  }
+
+  function startGoalTimer(){
+    sessionActiveSeconds = 0;
+    isPaused = false;
+    sessionLoggedThisRun = false;
+    lastActivityTs = performance.now();
+    updateGoalDisplay();
+    if (goalTickInt) clearInterval(goalTickInt);
+    goalTickInt = setInterval(function(){
+      var idleSec = (performance.now() - lastActivityTs) / 1000;
+      isPaused = idleSec >= INACTIVITY_LIMIT;
+      if (!isPaused){
+        sessionActiveSeconds += 1;
+        logSessionToHistory();
+      }
+      updateGoalDisplay();
+    }, 1000);
+  }
+
+  function stopGoalTimer(){
+    if (goalTickInt){ clearInterval(goalTickInt); goalTickInt = null; }
+    logSessionToHistory();
+    renderDayHistory();
+  }
+
+  window.addEventListener("beforeunload", function(){
+    logSessionToHistory();
+  });
+
+  (function initGoalPanel(){
+    updateGoalDisplay();
+    renderDayHistory();
+  })();
+
+  drawStaff();
+
+  function pickNote(){
+    var pool = state.pool;
+    var choice;
+    do {
+      choice = pool[Math.floor(Math.random()*pool.length)];
+    } while (pool.length > 1 && state.lastMidiPlayed !== null && parseNote(choice).midi === state.lastMidiPlayed);
+    return parseNote(choice);
+  }
+
+  function showNote(note){
+    state.current = note;
+    state.targetMidi = note.midi - 2; // Bb transposition: sounds a whole tone lower
+    state.resolved = false;
+    state.detectHistory = [];
+    state.noteStart = performance.now();
+    lampEl.className = "lamp";
+    cardEl.className = "card";
+    hideIcon();
+    drawNote(note);
+    noteNameEl.innerHTML = norwegianName(note.midi) + "<sub>" + note.octave + "</sub>";
+    noteAltEl.textContent = "Skrevet: " + englishName(note) + "  ·  klinger: " + norwegianName(state.targetMidi) + noteOctaveOf(state.targetMidi);
+    skipBtn.style.display = "inline-block";
+  }
+
+  function noteOctaveOf(midi){
+    return Math.floor(midi/12) - 1;
+  }
+
+  function nextNote(){
+    var note = pickNote();
+    state.lastMidiPlayed = note.midi;
+    showNote(note);
+  }
+
+  // ---------- TIMER ----------
+  function startTimerLoop(){
+    if (state.timerInt) clearInterval(state.timerInt);
+    state.timerInt = setInterval(function(){
+      if (state.resolved) return;
+      var t = (performance.now() - state.noteStart)/1000;
+      timerEl.innerHTML = t.toFixed(1) + "<span>sek</span>";
+    }, 100);
+  }
+
+  // ---------- AUDIO / PITCH DETECTION ----------
+  function autoCorrelate(buf, sampleRate){
+    var SIZE = buf.length;
+    var rms = 0;
+    for (var i=0;i<SIZE;i++){ rms += buf[i]*buf[i]; }
+    rms = Math.sqrt(rms/SIZE);
+    if (rms < 0.012) return -1;
+
+    var thres = 0.2, r1 = 0, r2 = SIZE-1;
+    for (i=0;i<SIZE/2;i++){ if (Math.abs(buf[i]) < thres){ r1 = i; break; } }
+    for (i=1;i<SIZE/2;i++){ if (Math.abs(buf[SIZE-i]) < thres){ r2 = SIZE-i; break; } }
+    var trimmed = buf.slice(r1, r2);
+    var n = trimmed.length;
+    if (n < 8) return -1;
+
+    var c = new Float32Array(n);
+    for (i=0;i<n;i++){
+      for (var j=0;j<n-i;j++){ c[i] += trimmed[j]*trimmed[j+i]; }
+    }
+    var d = 0;
+    while (d < n-1 && c[d] > c[d+1]) d++;
+    var maxVal = -1, maxPos = -1;
+    for (i=d;i<n;i++){
+      if (c[i] > maxVal){ maxVal = c[i]; maxPos = i; }
+    }
+    if (maxPos <= 0) return -1;
+    var x1 = c[maxPos-1] !== undefined ? c[maxPos-1] : c[maxPos];
+    var x2 = c[maxPos];
+    var x3 = c[maxPos+1] !== undefined ? c[maxPos+1] : c[maxPos];
+    var a = (x1 + x3 - 2*x2)/2;
+    var b = (x3 - x1)/2;
+    var T0 = maxPos;
+    if (a) T0 = maxPos - b/(2*a);
+    if (T0 <= 0) return -1;
+    var freq = sampleRate/T0;
+    if (freq < 60 || freq > 1400) return -1;
+    return freq;
+  }
+
+  function freqToMidi(f){ return 69 + 12*Math.log2(f/440); }
+
+  function flashRed(){
+    lampEl.className = "lamp red";
+    cardEl.className = "card feedback-red";
+    triggerScreenFlash("red");
+    showIcon("red", "✕", 450);
+    setTimeout(function(){
+      if (!state.resolved){ lampEl.className = "lamp"; cardEl.className = "card"; hideIcon(); }
+    }, 450);
+  }
+
+  function markSuccess(){
+    if (state.resolved) return;
+    state.resolved = true;
+    var elapsed = (performance.now() - state.noteStart)/1000;
+    lampEl.className = "lamp green";
+    cardEl.className = "card feedback-green";
+    triggerScreenFlash("green");
+    showIcon("green", "✓", 650);
+    skipBtn.style.display = "none";
+
+    state.stats.count++;
+    state.stats.totalTime += elapsed;
+    if (state.stats.best === null || elapsed < state.stats.best) state.stats.best = elapsed;
+    statCount.textContent = state.stats.count;
+    statAvg.textContent = (state.stats.totalTime/state.stats.count).toFixed(1) + "s";
+    statBest.textContent = state.stats.best.toFixed(1) + "s";
+
+    var chip = document.createElement("div");
+    chip.className = "chip ok";
+    chip.textContent = norwegianName(state.current.midi) + " " + elapsed.toFixed(1) + "s";
+    historyEl.insertBefore(chip, historyEl.firstChild);
+    while (historyEl.children.length > 10) historyEl.removeChild(historyEl.lastChild);
+
+    setTimeout(function(){
+      if (state.audioCtx) nextNote();
+    }, 650);
+  }
+
+  function processDetection(freq, rms){
+    micBar.style.width = Math.min(100, rms*900) + "%";
+
+    if (freq === -1){
+      tunerDot.style.background = "var(--muted)";
+      tunerDot.style.left = "50%";
+      tunerLabel.textContent = "stemming";
+      return;
+    }
+
+    var rawMidi = freqToMidi(freq);
+    var rounded = Math.round(rawMidi);
+    var cents = (rawMidi - rounded) * 100;
+
+    markActivity();
+
+    var pct = 50 + Math.max(-50, Math.min(50, cents));
+    tunerDot.style.left = pct + "%";
+    tunerDot.style.background = Math.abs(cents) < 12 ? "var(--green)" : "var(--brass-light)";
+    tunerLabel.textContent = norwegianName(rounded) + noteOctaveOf(rounded) + "  (" + (cents>=0?"+":"") + cents.toFixed(0) + " cent)";
+
+    if (state.resolved) return;
+
+    var now = performance.now();
+    state.detectHistory.push({midi:rounded, t:now});
+    state.detectHistory = state.detectHistory.filter(function(h){ return now - h.t < 180; });
+
+    if (state.detectHistory.length >= 4){
+      var allSame = state.detectHistory.every(function(h){ return h.midi === state.detectHistory[0].midi; });
+      if (allSame){
+        var stable = state.detectHistory[0].midi;
+        if (stable === state.targetMidi){
+          markSuccess();
+        } else if (now - state.lastWrongFlash > 700){
+          state.lastWrongFlash = now;
+          flashRed();
+        }
+      }
+    }
+  }
+
+  function detectLoop(){
+    var buf = new Float32Array(state.analyser.fftSize);
+    state.analyser.getFloatTimeDomainData(buf);
+    var rms = 0;
+    for (var i=0;i<buf.length;i++) rms += buf[i]*buf[i];
+    rms = Math.sqrt(rms/buf.length);
+    var freq = autoCorrelate(buf, state.audioCtx.sampleRate);
+    processDetection(freq, rms);
+  }
+
+  function startAudio(){
+    return navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false, noiseSuppression:false, autoGainControl:false}})
+      .then(function(stream){
+        state.stream = stream;
+        var AC = window.AudioContext || window.webkitAudioContext;
+        state.audioCtx = new AC();
+        var source = state.audioCtx.createMediaStreamSource(stream);
+        var analyser = state.audioCtx.createAnalyser();
+        analyser.fftSize = 2048;
+        source.connect(analyser);
+        state.analyser = analyser;
+        state.detectInt = setInterval(detectLoop, 40);
+      });
+  }
+
+  function stopAudio(){
+    if (state.detectInt){ clearInterval(state.detectInt); state.detectInt = null; }
+    if (state.stream){ state.stream.getTracks().forEach(function(t){ t.stop(); }); state.stream = null; }
+    if (state.audioCtx){ state.audioCtx.close(); state.audioCtx = null; }
+  }
+
+  // ---------- SESSION CONTROL ----------
+  levelSelect.addEventListener("change", function(){
+    state.level = levelSelect.value;
+    state.pool = LEVELS[state.level];
+  });
+
+  startBtn.addEventListener("click", function(){
+    statusMsg.textContent = "Ber om mikrofontilgang �";
+    statusMsg.className = "status-msg";
+    startBtn.disabled = true;
+    startAudio().then(function(){
+      statusMsg.textContent = "";
+      startBtn.style.display = "none";
+      stopBtn.disabled = false;
+      levelSelect.disabled = true;
+      state.stats = {count:0, totalTime:0, best:null};
+      statCount.textContent = "0";
+      statAvg.textContent = "�";
+      statBest.textContent = "�";
+      historyEl.innerHTML = "";
+      startTimerLoop();
+      startGoalTimer();
+      nextNote();
+    }).catch(function(err){
+      statusMsg.textContent = "Fikk ikke tilgang til mikrofonen. Sjekk nettleserinnstillingene og prøv igjen.";
+      statusMsg.className = "status-msg warn";
+      startBtn.disabled = false;
+    });
+  });
+
+  stopBtn.addEventListener("click", function(){
+    stopAudio();
+    stopGoalTimer();
+    if (state.timerInt) clearInterval(state.timerInt);
+    startBtn.style.display = "inline-block";
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+    levelSelect.disabled = false;
+    skipBtn.style.display = "none";
+    lampEl.className = "lamp";
+    cardEl.className = "card";
+    hideIcon();
+    screenFlash.className = "screen-flash";
+    noteNameEl.textContent = "�";
+    noteAltEl.textContent = "Trykk «Start øving» og gi mikrofon-tilgang";
+    timerEl.innerHTML = "0.0<span>sek</span>";
+    statusMsg.textContent = "�kten er avsluttet.";
+    statusMsg.className = "status-msg";
+    clearSvg(); drawStaff();
+  });
+
+  skipBtn.addEventListener("click", function(){
+    if (state.audioCtx) nextNote();
+  });
+
+})();
+</script>
+</body>
+</html>
