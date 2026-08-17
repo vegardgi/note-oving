@@ -173,6 +173,6 @@ app.post("/api/history", requireAuth, (req, res) => {
   res.json({ ok: true });
 });
 
-app.listen(PORT, () => {
-  console.log(`noteoving server listening on :${PORT}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`noteoving server listening on 0.0.0.0:${PORT}`);
 });
