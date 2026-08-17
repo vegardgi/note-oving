@@ -364,6 +364,40 @@
   }
   footer b{color:var(--muted);}
 
+  .user-badge{font-size:11.5px;color:var(--muted);margin-top:4px;}
+  .user-badge a{color:var(--brass-light);text-decoration:none;cursor:pointer;}
+  .user-badge b{color:var(--paper);}
+
+  .auth-gate{
+    position:fixed;inset:0;z-index:500;
+    background:rgba(11,15,20,.92);
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;
+  }
+  .auth-card{
+    width:100%;max-width:380px;
+    background:linear-gradient(180deg,var(--paper),var(--paper-2));
+    border-radius:var(--radius);
+    padding:26px 22px;
+    color:var(--ink-text);
+    box-shadow:0 24px 60px rgba(0,0,0,.55);
+  }
+  .auth-card h2{font-family:'Fraunces',serif;font-size:20px;margin:0 0 8px;}
+  .auth-card p{font-size:13px;color:#6b5d47;line-height:1.5;margin:0 0 16px;}
+  .auth-card input{
+    width:100%;padding:10px 12px;margin-bottom:10px;border-radius:10px;
+    border:1px solid #cbb98f;background:#fffaf0;font-family:'Inter',sans-serif;font-size:14px;
+    box-sizing:border-box;
+  }
+  .auth-buttons{display:flex;gap:8px;margin-top:4px;}
+  .auth-buttons button{flex:1;}
+  #registerBtn{background:var(--ink-3);color:var(--paper);border:1px solid #3a4753;}
+  .auth-error{color:#b23b3b;font-size:12.5px;min-height:16px;margin-top:8px;}
+  .btn-skip-auth{
+    display:block;width:100%;margin-top:14px;background:transparent;color:#6b5d47;
+    border:1px solid #cbb98f;font-size:12.5px;padding:9px;
+  }
+
   @media (max-width:480px){
     .note-name{font-size:28px;}
     .timer{font-size:24px;}
@@ -373,6 +407,24 @@
 </head>
 <body>
 <div class="screen-flash" id="screenFlash"></div>
+
+<div class="auth-gate" id="authGate">
+  <div class="auth-card">
+    <h2>Logg inn eller øv med en gang</h2>
+    <p>Logg inn (eller registrer ny bruker) for å lagre øvingshistorikken din. Eller hopp over og øv umiddelbart – da lagres ingen historikk.</p>
+    <form id="authForm">
+      <input id="authUsername" placeholder="Brukernavn" autocomplete="username" required>
+      <input id="authPassword" type="password" placeholder="Passord" autocomplete="current-password" required>
+      <div class="auth-buttons">
+        <button type="submit" id="loginBtn" class="btn-start">Logg inn</button>
+        <button type="button" id="registerBtn">Registrer ny bruker</button>
+      </div>
+    </form>
+    <div class="auth-error" id="authError"></div>
+    <button type="button" id="skipAuthBtn" class="btn-skip-auth">Hopp over – øv nå uten historikk</button>
+  </div>
+</div>
+
 <div class="wrap">
 
   <header>
@@ -381,12 +433,13 @@
       <div>
         <h1>Kornett<span>øving</span></h1>
         <div class="sub">Les noten. Spill tonen. Bli grønn.</div>
+        <div class="user-badge" id="userBadge"></div>
       </div>
     </div>
     <div class="controls">
       <select id="levelSelect">
-        <option value="lett">Lett · C�G</option>
-        <option value="middels" selected>Middels · C4�C5</option>
+        <option value="lett">Lett · C–G</option>
+        <option value="middels" selected>Middels · C4–C5</option>
         <option value="avansert">Avansert · med kryss</option>
       </select>
       <button id="startBtn" class="btn-start">Start øving</button>
@@ -401,7 +454,7 @@
       <div class="feedback-icon" id="feedbackIcon"></div>
       <svg class="staff" id="staffSvg" viewBox="0 0 600 190"></svg>
       <div class="name-row">
-        <div class="note-name" id="noteName">�</div>
+        <div class="note-name" id="noteName">–</div>
       </div>
       <div class="note-name-alt" id="noteAlt" style="text-align:center;margin-top:2px;">Trykk «Start øving» og gi mikrofon-tilgang</div>
     </div>
@@ -422,17 +475,17 @@
     </div>
   </div>
 
-  <button class="btn-skip" id="skipBtn" style="display:none;margin-top:14px;">Hopp over denne tonen �</button>
+  <button class="btn-skip" id="skipBtn" style="display:none;margin-top:14px;">Hopp over denne tonen →</button>
 
   <div class="goal-card">
     <div class="goal-top">
       <div>
-        <div class="goal-label">�ktens øvingstid <span style="color:var(--muted-2);">(minimum: 5 min)</span></div>
+        <div class="goal-label">Øktens øvingstid <span style="color:var(--muted-2);">(minimum: 5 min)</span></div>
         <div class="goal-time" id="goalTime">0:00<span> / 5:00</span></div>
       </div>
       <div class="goal-session">
         Status
-        <b id="sessionStatus">�</b>
+        <b id="sessionStatus">–</b>
       </div>
     </div>
     <div class="goal-bar-track"><div class="goal-bar-fill" id="goalBarFill"></div></div>
@@ -441,20 +494,20 @@
 
   <div class="stats">
     <div class="stat"><b id="statCount">0</b><span>toner riktig</span></div>
-    <div class="stat"><b id="statAvg">�</b><span>snitt-tid</span></div>
-    <div class="stat"><b id="statBest">�</b><span>beste tid</span></div>
+    <div class="stat"><b id="statAvg">–</b><span>snitt-tid</span></div>
+    <div class="stat"><b id="statBest">–</b><span>beste tid</span></div>
   </div>
 
   <div class="history" id="noteHistory"></div>
   <div class="status-msg" id="statusMsg"></div>
 
   <div class="day-history">
-    <h2>�vingshistorikk <span>siste 14 dager</span></h2>
+    <h2>Øvingshistorikk <span>siste 14 dager</span></h2>
     <div id="dayHistoryList"></div>
   </div>
 
   <footer>
-    <b>Slik virker det:</b> Kornett er et Bb-instrument � tonen som klinger er et heltrinn lavere enn den som skrives. Notebildet viser skrevet tone, og appen lytter etter den faktiske klingende tonen fra mikrofonen. Lampen lyser grønt når riktig tone holdes stabilt, rødt ved feil tone. Neste note kommer automatisk. Fungerer best i Chrome, i et rolig rom, med mikrofontilgang tillatt.
+    <b>Slik virker det:</b> Kornett er et Bb-instrument – tonen som klinger er et heltrinn lavere enn den som skrives. Notebildet viser skrevet tone, og appen lytter etter den faktiske klingende tonen fra mikrofonen. Lampen lyser grønt når riktig tone holdes stabilt, rødt ved feil tone. Neste note kommer automatisk. Fungerer best i Chrome, i et rolig rom, med mikrofontilgang tillatt.
   </footer>
 </div>
 
@@ -615,11 +668,17 @@
   var dayHistoryListEl = document.getElementById("dayHistoryList");
 
   // ---------- STORAGE / DAILY HISTORY ----------
+  // authMode "server": innlogget bruker, historikk hentes/lagres via API.
+  // authMode "anonymous": hoppet over login, historikk lagres kun lokalt (localStorage).
   var STORAGE_KEY = "kornettoving_history_v1";
   var storageAvailable = true;
   try { localStorage.setItem("__kornett_test__","1"); localStorage.removeItem("__kornett_test__"); }
   catch(e){ storageAvailable = false; }
   var memoryHistory = {};
+  var historyCache = {};
+  var authMode = null;
+  var currentUsername = null;
+  var currentSessionId = null;
 
   var WEEKDAYS_NO = ["søn","man","tir","ons","tor","fre","lør"];
   var MONTHS_NO = ["jan","feb","mar","apr","mai","jun","jul","aug","sep","okt","nov","des"];
@@ -635,15 +694,23 @@
     if (offsetDays) d.setDate(d.getDate() + offsetDays);
     return d.getFullYear() + "-" + pad2(d.getMonth()+1) + "-" + pad2(d.getDate());
   }
-  function loadHistory(){
+  function loadLocalHistory(){
     if (!storageAvailable) return memoryHistory;
     try{ var raw = localStorage.getItem(STORAGE_KEY); return raw ? JSON.parse(raw) : {}; }
     catch(e){ return memoryHistory; }
   }
-  function persistHistoryData(data){
+  function persistLocalHistory(data){
     if (!storageAvailable){ memoryHistory = data; return; }
     try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
     catch(e){ memoryHistory = data; }
+  }
+  function currentHistoryData(){
+    return authMode === "server" ? historyCache : loadLocalHistory();
+  }
+  function upsertEntry(data, key, entry){
+    if (!data[key]) data[key] = [];
+    var idx = data[key].findIndex(function(e){ return e.sessionId === entry.sessionId; });
+    if (idx === -1) data[key].push(entry); else data[key][idx] = entry;
   }
   function dateLabel(key){
     var parts = key.split("-").map(Number);
@@ -653,11 +720,12 @@
     return WEEKDAYS_NO[d.getDay()] + " " + parts[2] + "." + MONTHS_NO[parts[1]-1];
   }
   function storageWarningSuffix(){
-    return storageAvailable ? "" : " (Historikken lagres kun i denne visningen. �pne den nedlastede filen direkte i nettleseren for at den skal huskes til neste dag.)";
+    if (authMode === "server") return "";
+    return storageAvailable ? "" : " (Historikken lagres kun i denne visningen. Åpne den nedlastede filen direkte i nettleseren for at den skal huskes til neste dag.)";
   }
 
   function renderDayHistory(){
-    var data = loadHistory();
+    var data = currentHistoryData();
     var keys = Object.keys(data).sort().reverse().slice(0,14);
     dayHistoryListEl.innerHTML = "";
     if (!keys.length){
@@ -682,14 +750,13 @@
     });
   }
 
-  // ---------- PER-�KT TIMER MED AUTO-PAUSE ----------
+  // ---------- PER-ØKT TIMER MED AUTO-PAUSE ----------
   var GOAL_SECONDS = 300; // 5 min minimum pr økt
   var INACTIVITY_LIMIT = 30; // sek uten spilt tone før pause
   var goalTickInt = null;
   var sessionActiveSeconds = 0;   // faktisk telte (upausede) sekunder denne økten
   var lastActivityTs = null;      // performance.now() for siste registrerte tone
   var isPaused = false;
-  var sessionLoggedThisRun = false;
 
   function markActivity(){
     lastActivityTs = performance.now();
@@ -707,21 +774,21 @@
     goalBarFill.style.width = pct + "%";
 
     if (isPaused){
-      sessionStatusEl.textContent = "� Pause";
+      sessionStatusEl.textContent = "⏸ Pause";
       sessionStatusEl.className = "paused";
       goalBarFill.classList.remove("reached");
       goalBarFill.classList.add("paused");
       goalMsgEl.className = "goal-msg paused";
-      goalMsgEl.textContent = "� Pause � ingen tone spilt på " + INACTIVITY_LIMIT + " sek. Spill en tone for å fortsette.";
+      goalMsgEl.textContent = "⏸ Pause – ingen tone spilt på " + INACTIVITY_LIMIT + " sek. Spill en tone for å fortsette.";
       return;
     }
     goalBarFill.classList.remove("paused");
-    sessionStatusEl.textContent = "� Aktiv";
+    sessionStatusEl.textContent = "▶ Aktiv";
     sessionStatusEl.className = "active";
     if (reachedGoal){
       goalBarFill.classList.add("reached");
       goalMsgEl.className = "goal-msg reached";
-      goalMsgEl.textContent = "� Minimum på 5 min er nådd � teller fortsetter så lenge dere øver." + storageWarningSuffix();
+      goalMsgEl.textContent = "🎉 Minimum på 5 min er nådd – teller fortsetter så lenge dere øver." + storageWarningSuffix();
     } else {
       goalBarFill.classList.remove("reached");
       goalMsgEl.className = "goal-msg";
@@ -731,24 +798,28 @@
 
   function logSessionToHistory(){
     if (sessionActiveSeconds < 1) return; // ikke logg tomme økter
-    var data = loadHistory();
     var key = todayKeyStr(0);
-    if (!data[key]) data[key] = [];
-    var entry = {seconds: Math.round(sessionActiveSeconds), notes: state.stats.count, ts: Date.now()};
-    if (!sessionLoggedThisRun){
-      data[key].push(entry);
-      sessionLoggedThisRun = true;
-    } else {
-      // oppdater siste logg-post for denne økten i stedet for å legge til flere
-      data[key][data[key].length - 1] = entry;
+    var entry = {seconds: Math.round(sessionActiveSeconds), notes: state.stats.count, ts: Date.now(), sessionId: currentSessionId};
+    if (authMode === "server"){
+      upsertEntry(historyCache, key, entry);
+      renderDayHistory();
+      fetch("/api/history", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({sessionId: entry.sessionId, date: key, seconds: entry.seconds, notes: entry.notes})
+      }).catch(function(){});
+    } else if (authMode === "anonymous"){
+      var data = loadLocalHistory();
+      upsertEntry(data, key, entry);
+      persistLocalHistory(data);
+      renderDayHistory();
     }
-    persistHistoryData(data);
   }
 
   function startGoalTimer(){
     sessionActiveSeconds = 0;
     isPaused = false;
-    sessionLoggedThisRun = false;
+    currentSessionId = "s" + Math.floor(performance.now()) + "_" + Math.floor(Math.random()*1e6);
     lastActivityTs = performance.now();
     updateGoalDisplay();
     if (goalTickInt) clearInterval(goalTickInt);
@@ -982,7 +1053,7 @@
   });
 
   startBtn.addEventListener("click", function(){
-    statusMsg.textContent = "Ber om mikrofontilgang �";
+    statusMsg.textContent = "Ber om mikrofontilgang …";
     statusMsg.className = "status-msg";
     startBtn.disabled = true;
     startAudio().then(function(){
@@ -992,8 +1063,8 @@
       levelSelect.disabled = true;
       state.stats = {count:0, totalTime:0, best:null};
       statCount.textContent = "0";
-      statAvg.textContent = "�";
-      statBest.textContent = "�";
+      statAvg.textContent = "–";
+      statBest.textContent = "–";
       historyEl.innerHTML = "";
       startTimerLoop();
       startGoalTimer();
@@ -1018,16 +1089,110 @@
     cardEl.className = "card";
     hideIcon();
     screenFlash.className = "screen-flash";
-    noteNameEl.textContent = "�";
+    noteNameEl.textContent = "–";
     noteAltEl.textContent = "Trykk «Start øving» og gi mikrofon-tilgang";
     timerEl.innerHTML = "0.0<span>sek</span>";
-    statusMsg.textContent = "�kten er avsluttet.";
+    statusMsg.textContent = "Økten er avsluttet.";
     statusMsg.className = "status-msg";
     clearSvg(); drawStaff();
   });
 
   skipBtn.addEventListener("click", function(){
     if (state.audioCtx) nextNote();
+  });
+
+  // ---------- LOGIN / GATE ----------
+  var authGate = document.getElementById("authGate");
+  var authForm = document.getElementById("authForm");
+  var authUsername = document.getElementById("authUsername");
+  var authPassword = document.getElementById("authPassword");
+  var authError = document.getElementById("authError");
+  var registerBtn = document.getElementById("registerBtn");
+  var skipAuthBtn = document.getElementById("skipAuthBtn");
+  var userBadge = document.getElementById("userBadge");
+
+  function showApp(){ authGate.style.display = "none"; }
+  function showGate(){
+    authGate.style.display = "flex";
+    authError.textContent = "";
+  }
+
+  function updateUserBadge(){
+    if (authMode === "server"){
+      userBadge.innerHTML = "Logget inn som <b>" + currentUsername + "</b> · <a id=\"logoutLink\">Logg ut</a>";
+      document.getElementById("logoutLink").addEventListener("click", function(){
+        fetch("/api/logout", {method:"POST"}).then(function(){
+          authMode = null;
+          currentUsername = null;
+          historyCache = {};
+          updateUserBadge();
+          renderDayHistory();
+          showGate();
+        });
+      });
+    } else {
+      userBadge.innerHTML = "Øver uten historikk · <a id=\"loginLink\">Logg inn</a>";
+      document.getElementById("loginLink").addEventListener("click", function(){ showGate(); });
+    }
+  }
+
+  function refreshHistoryFromServer(){
+    return fetch("/api/history")
+      .then(function(res){ return res.ok ? res.json() : {}; })
+      .then(function(data){ historyCache = data || {}; renderDayHistory(); })
+      .catch(function(){ renderDayHistory(); });
+  }
+
+  function doAuth(kind){
+    authError.textContent = "";
+    var username = authUsername.value.trim();
+    var password = authPassword.value;
+    if (!username || !password){
+      authError.textContent = "Fyll ut brukernavn og passord.";
+      return;
+    }
+    fetch("/api/" + kind, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({username: username, password: password})
+    }).then(function(res){
+      return res.json().then(function(data){ return {ok: res.ok, data: data}; });
+    }).then(function(result){
+      if (!result.ok){
+        authError.textContent = result.data.error || "Noe gikk galt.";
+        return;
+      }
+      authMode = "server";
+      currentUsername = result.data.username;
+      authPassword.value = "";
+      updateUserBadge();
+      showApp();
+      return refreshHistoryFromServer();
+    }).catch(function(){
+      authError.textContent = "Klarte ikke å nå serveren. Prøv igjen.";
+    });
+  }
+
+  authForm.addEventListener("submit", function(e){ e.preventDefault(); doAuth("login"); });
+  registerBtn.addEventListener("click", function(){ doAuth("register"); });
+  skipAuthBtn.addEventListener("click", function(){
+    authMode = "anonymous";
+    updateUserBadge();
+    renderDayHistory();
+    showApp();
+  });
+
+  fetch("/api/me").then(function(res){ return res.json(); }).then(function(data){
+    if (data && data.username){
+      authMode = "server";
+      currentUsername = data.username;
+      updateUserBadge();
+      showApp();
+      return refreshHistoryFromServer();
+    }
+    showGate();
+  }).catch(function(){
+    showGate();
   });
 
 })();

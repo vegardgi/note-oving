@@ -1,4 +1,10 @@
-FROM nginx:alpine
-COPY index.html /usr/share/nginx/html/index.html
+FROM node:20-slim
+WORKDIR /app
+COPY package.json ./
+RUN npm install --omit=dev
+COPY server.js ./
+COPY public ./public
+ENV PORT=8080
+ENV DATA_DIR=/data
 EXPOSE 8080
-RUN sed -i 's/listen\s*80;/listen 8080;/' /etc/nginx/conf.d/default.conf
+CMD ["node", "server.js"]
