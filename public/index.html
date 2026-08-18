@@ -364,6 +364,24 @@
   }
   footer b{color:var(--muted);}
 
+  .lick-title{
+    text-align:center;font-family:'Fraunces',serif;font-weight:600;font-size:14px;
+    color:#6b5d47;margin-bottom:2px;
+  }
+  .lick-title small{display:block;font-family:'Inter',sans-serif;font-weight:400;font-size:11px;color:#8a7a5a;margin-top:1px;}
+  .notehead.state-upcoming{fill:var(--ink-text);opacity:.35;}
+  .notehead.state-current{fill:var(--brass-dark);opacity:1;}
+  .notehead.state-hit{fill:var(--green);opacity:1;}
+  .notehead.state-missed{fill:var(--red);opacity:.6;}
+  .ledger.state-upcoming{opacity:.35;}
+  .ledger.state-current{opacity:1;}
+  .ledger.state-hit{opacity:1;}
+  .ledger.state-missed{opacity:.6;}
+  .lick-summary{
+    text-align:center;font-family:'Fraunces',serif;font-weight:600;font-size:16px;
+    color:var(--ink-text);margin-top:6px;
+  }
+
   .user-badge{font-size:11.5px;color:var(--muted);margin-top:4px;}
   .user-badge a{color:var(--brass-light);text-decoration:none;cursor:pointer;}
   .user-badge b{color:var(--paper);}
@@ -437,10 +455,19 @@
       </div>
     </div>
     <div class="controls">
+      <select id="modeSelect">
+        <option value="single" selected>Enkelttoner</option>
+        <option value="song">Låt-modus</option>
+      </select>
       <select id="levelSelect">
         <option value="lett">Lett · C–G</option>
         <option value="middels" selected>Middels · C4–C5</option>
         <option value="avansert">Avansert · med kryss</option>
+      </select>
+      <select id="genreSelect" style="display:none;">
+        <option value="rock" selected>Rock/pop-riff</option>
+        <option value="blues">Blues-frase</option>
+        <option value="jazz">Jazz-frase</option>
       </select>
       <button id="startBtn" class="btn-start">Start øving</button>
       <button id="stopBtn" class="btn-stop" disabled>Avslutt</button>
@@ -452,6 +479,7 @@
     <div class="card" id="card">
       <div class="clip"></div>
       <div class="feedback-icon" id="feedbackIcon"></div>
+      <div class="lick-title" id="lickTitle" style="display:none;"></div>
       <svg class="staff" id="staffSvg" viewBox="0 0 600 190"></svg>
       <div class="name-row">
         <div class="note-name" id="noteName">–</div>
@@ -508,6 +536,8 @@
 
   <footer>
     <b>Slik virker det:</b> Kornett er et Bb-instrument – tonen som klinger er et heltrinn lavere enn den som skrives. Notebildet viser skrevet tone, og appen lytter etter den faktiske klingende tonen fra mikrofonen. Lampen lyser grønt når riktig tone holdes stabilt, rødt ved feil tone. Neste note kommer automatisk. Fungerer best i Chrome, i et rolig rom, med mikrofontilgang tillatt.
+    <br><br>
+    <b>Låt-modus:</b> viser en kort, kjent frase i stedet for tilfeldige enkelttoner – hele frasen tegnes på notesystemet, og gjeldende tone er uthevet. Toner som treffes riktig blir grønne, hoppet-over toner blir røde. Timingen vurderes fleksibelt ut fra avstanden mellom tonene sammenlignet med frasens rytme – ikke et strengt klokkeslett – siden mikrofon-gjenkjenning alltid har litt forsinkelse.
   </footer>
 </div>
 
@@ -534,6 +564,57 @@
     lett: ["C4","D4","E4","F4","G4"],
     middels: ["C4","D4","E4","F4","G4","A4","B4","C5"],
     avansert: ["G3","A3","B3","C4","C#4","D4","D#4","E4","F4","F#4","G4","G#4","A4","A#4","B4","C5","C#5","D5"]
+  };
+
+  // ---------- LÅT-MODUS: kjente riff/fraser ----------
+  // Notene er skrevet tone (samme konvensjon som LEVELS over) – Bb-transponeringen
+  // (-2 halvtoner til klingende) skjer automatisk i showLickNote(), akkurat som i showNote().
+  // "b" er antall slag (relativ varighet) brukt til den fleksible timing-vurderingen.
+  var LICKS = {
+    rock: [
+      {
+        name: "Smoke on the Water", artist: "Deep Purple",
+        notes: [
+          {n:"G4",b:1},{n:"A#4",b:1},{n:"C5",b:1.5},
+          {n:"G4",b:1},{n:"A#4",b:1},{n:"C#5",b:1},{n:"C5",b:2}
+        ]
+      },
+      {
+        name: "Seven Nation Army", artist: "The White Stripes",
+        notes: [
+          {n:"E4",b:1.5},{n:"E4",b:1},{n:"G4",b:1},{n:"E4",b:1},
+          {n:"D4",b:1},{n:"C4",b:1},{n:"B3",b:2}
+        ]
+      }
+    ],
+    blues: [
+      {
+        name: "Blues-vending", artist: "klassisk blues-vokabular",
+        notes: [
+          {n:"C4",b:1},{n:"D#4",b:1},{n:"F4",b:1},{n:"F#4",b:1},{n:"G4",b:2}
+        ]
+      },
+      {
+        name: "Call & response", artist: "klassisk blues-vokabular",
+        notes: [
+          {n:"G4",b:1},{n:"A#4",b:1},{n:"C5",b:1},{n:"A#4",b:1},{n:"G4",b:2}
+        ]
+      }
+    ],
+    jazz: [
+      {
+        name: "ii-V-I-frase", artist: "klassisk jazz-vokabular",
+        notes: [
+          {n:"D4",b:1},{n:"F4",b:1},{n:"A4",b:1},{n:"G4",b:1},{n:"B3",b:1},{n:"C4",b:2}
+        ]
+      },
+      {
+        name: "Bebop-løp", artist: "klassisk jazz-vokabular",
+        notes: [
+          {n:"C4",b:1},{n:"D4",b:1},{n:"E4",b:1},{n:"G4",b:1},{n:"E4",b:1},{n:"C4",b:2}
+        ]
+      }
+    ]
   };
 
   function norwegianName(midi){
@@ -578,27 +659,26 @@
     return steps;
   }
 
-  function drawNote(note){
-    // remove previous notehead/ledger/accidental group
-    var old = staffSvg.querySelector("#noteGroup");
-    if (old) staffSvg.removeChild(old);
-    var g = el("g",{id:"noteGroup"});
-    var cx = 320;
+  function drawNoteAt(note, cx, stateClass, ledgerHalfWidth){
+    var g = el("g",{});
     var y = BASE_Y - note.diatonicStep * STEP_PX;
+    var lw = ledgerHalfWidth || 22;
+    var ledgerCls = stateClass ? ("ledger " + stateClass) : "ledger";
+    var noteheadCls = stateClass ? ("notehead " + stateClass) : "notehead";
 
     var ledgers = ledgerSteps(note.diatonicStep);
     ledgers.forEach(function(s){
       var ly = BASE_Y - s*STEP_PX;
-      g.appendChild(el("line",{x1:cx-22,x2:cx+22,y1:ly,y2:ly,class:"ledger"}));
+      g.appendChild(el("line",{x1:cx-lw,x2:cx+lw,y1:ly,y2:ly,class:ledgerCls}));
     });
 
     if (note.sharp){
-      var acc = el("text",{x:cx-34,y:y+7,"font-size":26,class:"accidental"});
+      var acc = el("text",{x:cx-lw-12,y:y+7,"font-size":26,class:"accidental"});
       acc.textContent = "♯";
       g.appendChild(acc);
     }
 
-    g.appendChild(el("ellipse",{cx:cx,cy:y,rx:11,ry:8,class:"notehead",transform:"rotate(-18 "+cx+" "+y+")"}));
+    g.appendChild(el("ellipse",{cx:cx,cy:y,rx:11,ry:8,class:noteheadCls,transform:"rotate(-18 "+cx+" "+y+")"}));
 
     // stem
     var stemUp = note.diatonicStep < 4;
@@ -608,12 +688,37 @@
     g.appendChild(el("line",{x1:stemX,x2:stemX,y1:stemY1,y2:stemY2,stroke:"var(--ink-text)","stroke-width":1.8}));
 
     staffSvg.appendChild(g);
+    return g;
+  }
+
+  function drawNote(note){
+    // remove previous notehead/ledger/accidental group (enkelttone-modus)
+    var old = staffSvg.querySelector("#noteGroup");
+    if (old) staffSvg.removeChild(old);
+    var g = drawNoteAt(note, 320, "");
+    g.setAttribute("id", "noteGroup");
+  }
+
+  function drawLick(lick, states){
+    drawStaff();
+    var count = lick.notes.length;
+    var xStart = count > 1 ? 120 : 320;
+    var xEnd = 520;
+    var step = count > 1 ? (xEnd - xStart) / (count - 1) : 0;
+    var lw = count > 5 ? 16 : 22;
+    lick.notes.forEach(function(item, i){
+      var note = parseNote(item.n);
+      var cx = count > 1 ? (xStart + step * i) : xStart;
+      drawNoteAt(note, cx, "state-" + (states[i] || "upcoming"), lw);
+    });
   }
 
   // ---------- STATE ----------
   var state = {
+    mode: "single",
     level: "middels",
     pool: LEVELS.middels,
+    genre: "rock",
     current: null,
     targetMidi: null,
     noteStart: 0,
@@ -626,7 +731,17 @@
     stream: null,
     detectInt: null,
     stats: {count:0, totalTime:0, best:null},
-    lastMidiPlayed: null
+    lastMidiPlayed: null,
+    // låt-modus
+    lick: null,
+    lickIndex: 0,
+    lickStates: [],
+    lastOnset: null,
+    msPerBeat: null,
+    lickHits: 0,
+    lickTimingJudged: 0,
+    lickTimingHits: 0,
+    lastLickKey: null
   };
 
   var noteNameEl = document.getElementById("noteName");
@@ -661,6 +776,9 @@
   var startBtn = document.getElementById("startBtn");
   var stopBtn = document.getElementById("stopBtn");
   var levelSelect = document.getElementById("levelSelect");
+  var modeSelect = document.getElementById("modeSelect");
+  var genreSelect = document.getElementById("genreSelect");
+  var lickTitleEl = document.getElementById("lickTitle");
   var goalTimeEl = document.getElementById("goalTime");
   var sessionStatusEl = document.getElementById("sessionStatus");
   var goalBarFill = document.getElementById("goalBarFill");
@@ -885,6 +1003,66 @@
     showNote(note);
   }
 
+  // ---------- LÅT-MODUS ----------
+  function pickLick(genre){
+    var arr = LICKS[genre];
+    var lick, key;
+    do {
+      lick = arr[Math.floor(Math.random()*arr.length)];
+      key = genre + ":" + lick.name;
+    } while (arr.length > 1 && state.lastLickKey !== null && key === state.lastLickKey);
+    state.lastLickKey = key;
+    return lick;
+  }
+
+  function startLick(lick){
+    state.lick = lick;
+    state.lickIndex = 0;
+    state.lickStates = lick.notes.map(function(){ return "upcoming"; });
+    state.lastOnset = null;
+    state.msPerBeat = null;
+    state.lickHits = 0;
+    state.lickTimingJudged = 0;
+    state.lickTimingHits = 0;
+    lickTitleEl.style.display = "block";
+    lickTitleEl.innerHTML = lick.name + "<small>" + lick.artist + "</small>";
+    showLickNote();
+  }
+
+  function showLickNote(){
+    var item = state.lick.notes[state.lickIndex];
+    var note = parseNote(item.n);
+    state.current = note;
+    state.targetMidi = note.midi - 2; // Bb transposition: sounds a whole tone lower
+    state.resolved = false;
+    state.detectHistory = [];
+    state.noteStart = performance.now();
+    lampEl.className = "lamp";
+    cardEl.className = "card";
+    hideIcon();
+    state.lickStates[state.lickIndex] = "current";
+    drawLick(state.lick, state.lickStates);
+    noteNameEl.innerHTML = norwegianName(note.midi) + "<sub>" + note.octave + "</sub>";
+    noteAltEl.textContent = "Tone " + (state.lickIndex+1) + "/" + state.lick.notes.length +
+      "  ·  klinger: " + norwegianName(state.targetMidi) + noteOctaveOf(state.targetMidi);
+    skipBtn.style.display = "inline-block";
+  }
+
+  function finishLick(){
+    var total = state.lick.notes.length;
+    var timingText = state.lickTimingJudged > 0
+      ? (" Timing: " + state.lickTimingHits + "/" + state.lickTimingJudged + " gode.")
+      : "";
+    statusMsg.className = "status-msg";
+    statusMsg.textContent = "🎉 Ferdig! " + state.lickHits + "/" + total + " riktige toner." + timingText;
+    skipBtn.style.display = "none";
+    setTimeout(function(){
+      if (!state.audioCtx) return;
+      statusMsg.textContent = "";
+      startLick(pickLick(state.genre));
+    }, 1800);
+  }
+
   // ---------- TIMER ----------
   function startTimerLoop(){
     if (state.timerInt) clearInterval(state.timerInt);
@@ -969,8 +1147,43 @@
     historyEl.insertBefore(chip, historyEl.firstChild);
     while (historyEl.children.length > 10) historyEl.removeChild(historyEl.lastChild);
 
+    if (state.mode === "song"){
+      // Fleksibel timing-vurdering: sammenligner avstanden mellom denne og forrige
+      // tone-treff med notens forventede varighet, i stedet for en fast klokke.
+      var onset = performance.now();
+      var idx = state.lickIndex;
+      state.lickStates[idx] = "hit";
+      state.lickHits++;
+      if (state.lastOnset !== null && idx > 0){
+        var interval = onset - state.lastOnset;
+        var prevBeats = state.lick.notes[idx - 1].b;
+        var thisRatio = interval / prevBeats;
+        if (state.msPerBeat === null){
+          state.msPerBeat = thisRatio; // etablerer tempo fra elevens eget spilletempo
+        } else {
+          var expected = prevBeats * state.msPerBeat;
+          var ratio = interval / expected;
+          state.lickTimingJudged++;
+          if (ratio > 0.55 && ratio < 1.8) state.lickTimingHits++;
+          state.msPerBeat = state.msPerBeat * 0.7 + thisRatio * 0.3; // følger elevens tempo
+        }
+      }
+      state.lastOnset = onset;
+      drawLick(state.lick, state.lickStates);
+    }
+
     setTimeout(function(){
-      if (state.audioCtx) nextNote();
+      if (!state.audioCtx) return;
+      if (state.mode === "song"){
+        if (state.lickIndex < state.lick.notes.length - 1){
+          state.lickIndex++;
+          showLickNote();
+        } else {
+          finishLick();
+        }
+      } else {
+        nextNote();
+      }
     }, 650);
   }
 
@@ -1052,6 +1265,18 @@
     state.pool = LEVELS[state.level];
   });
 
+  modeSelect.addEventListener("change", function(){
+    state.mode = modeSelect.value;
+    var isSong = state.mode === "song";
+    levelSelect.style.display = isSong ? "none" : "";
+    genreSelect.style.display = isSong ? "" : "none";
+    lickTitleEl.style.display = "none";
+  });
+
+  genreSelect.addEventListener("change", function(){
+    state.genre = genreSelect.value;
+  });
+
   startBtn.addEventListener("click", function(){
     statusMsg.textContent = "Ber om mikrofontilgang …";
     statusMsg.className = "status-msg";
@@ -1061,6 +1286,8 @@
       startBtn.style.display = "none";
       stopBtn.disabled = false;
       levelSelect.disabled = true;
+      modeSelect.disabled = true;
+      genreSelect.disabled = true;
       state.stats = {count:0, totalTime:0, best:null};
       statCount.textContent = "0";
       statAvg.textContent = "–";
@@ -1068,7 +1295,11 @@
       historyEl.innerHTML = "";
       startTimerLoop();
       startGoalTimer();
-      nextNote();
+      if (state.mode === "song"){
+        startLick(pickLick(state.genre));
+      } else {
+        nextNote();
+      }
     }).catch(function(err){
       statusMsg.textContent = "Fikk ikke tilgang til mikrofonen. Sjekk nettleserinnstillingene og prøv igjen.";
       statusMsg.className = "status-msg warn";
@@ -1084,7 +1315,10 @@
     startBtn.disabled = false;
     stopBtn.disabled = true;
     levelSelect.disabled = false;
+    modeSelect.disabled = false;
+    genreSelect.disabled = false;
     skipBtn.style.display = "none";
+    lickTitleEl.style.display = "none";
     lampEl.className = "lamp";
     cardEl.className = "card";
     hideIcon();
@@ -1098,7 +1332,19 @@
   });
 
   skipBtn.addEventListener("click", function(){
-    if (state.audioCtx) nextNote();
+    if (!state.audioCtx) return;
+    if (state.mode === "song"){
+      state.lickStates[state.lickIndex] = "missed";
+      state.lastOnset = null;
+      if (state.lickIndex < state.lick.notes.length - 1){
+        state.lickIndex++;
+        showLickNote();
+      } else {
+        finishLick();
+      }
+    } else {
+      nextNote();
+    }
   });
 
   // ---------- LOGIN / GATE ----------
