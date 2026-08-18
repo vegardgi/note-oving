@@ -503,7 +503,11 @@
     </div>
   </div>
 
-  <button class="btn-skip" id="skipBtn" style="display:none;margin-top:14px;">Hopp over denne tonen →</button>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;">
+    <button class="btn-skip" id="playBtn" style="display:none;">🔊 Spill av tone(r)</button>
+    <button class="btn-skip" id="skipBtn" style="display:none;">Hopp over denne tonen →</button>
+    <button class="btn-skip" id="skipSongBtn" style="display:none;">Hopp over sang →</button>
+  </div>
 
   <div class="goal-card">
     <div class="goal-top">
@@ -773,6 +777,8 @@
   var statBest = document.getElementById("statBest");
   var historyEl = document.getElementById("noteHistory");
   var skipBtn = document.getElementById("skipBtn");
+  var skipSongBtn = document.getElementById("skipSongBtn");
+  var playBtn = document.getElementById("playBtn");
   var startBtn = document.getElementById("startBtn");
   var stopBtn = document.getElementById("stopBtn");
   var levelSelect = document.getElementById("levelSelect");
@@ -991,6 +997,8 @@
     noteNameEl.innerHTML = norwegianName(note.midi) + "<sub>" + note.octave + "</sub>";
     noteAltEl.textContent = "Skrevet: " + englishName(note) + "  ·  klinger: " + norwegianName(state.targetMidi) + noteOctaveOf(state.targetMidi);
     skipBtn.style.display = "inline-block";
+    playBtn.style.display = "inline-block";
+    skipSongBtn.style.display = "none";
   }
 
   function noteOctaveOf(midi){
@@ -1046,6 +1054,17 @@
     noteAltEl.textContent = "Tone " + (state.lickIndex+1) + "/" + state.lick.notes.length +
       "  ·  klinger: " + norwegianName(state.targetMidi) + noteOctaveOf(state.targetMidi);
     skipBtn.style.display = "inline-block";
+    playBtn.style.display = "inline-block";
+    skipSongBtn.style.display = "inline-block";
+  }
+
+  function skipSong(){
+    if (!state.audioCtx || state.mode !== "song" || !state.lick) return;
+    for (var i = state.lickIndex; i < state.lickStates.length; i++){
+      state.lickStates[i] = "missed";
+    }
+    drawLick(state.lick, state.lickStates);
+    finishLick();
   }
 
   function finishLick(){
@@ -1056,6 +1075,8 @@
     statusMsg.className = "status-msg";
     statusMsg.textContent = "🎉 Ferdig! " + state.lickHits + "/" + total + " riktige toner." + timingText;
     skipBtn.style.display = "none";
+    playBtn.style.display = "none";
+    skipSongBtn.style.display = "none";
     setTimeout(function(){
       if (!state.audioCtx) return;
       statusMsg.textContent = "";
@@ -1113,6 +1134,51 @@
   }
 
   function freqToMidi(f){ return 69 + 12*Math.log2(f/440); }
+  function midiToFreq(m){ return 440 * Math.pow(2, (m-69)/12); }
+
+  // ---------- AVSPILLING (høre tonen/frasen før man selv spiller) ----------
+  var playbackCtx = null;
+  function getPlaybackCtx(){
+    if (!playbackCtx){
+      var AC = window.AudioContext || window.webkitAudioContext;
+      playbackCtx = new AC();
+    }
+    if (playbackCtx.state === "suspended") playbackCtx.resume();
+    return playbackCtx;
+  }
+  function playFrequency(ctx, freq, startTime, duration){
+    var osc = ctx.createOscillator();
+    var gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, startTime);
+    gain.gain.linearRampToValueAtTime(0.22, startTime + 0.02);
+    gain.gain.linearRampToValueAtTime(0.22, Math.max(startTime + 0.02, startTime + duration - 0.05));
+    gain.gain.linearRampToValueAtTime(0, startTime + duration);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(startTime);
+    osc.stop(startTime + duration + 0.02);
+  }
+  function playCurrentTones(){
+    if (!state.current) return;
+    var ctx = getPlaybackCtx();
+    var now = ctx.currentTime + 0.05;
+    if (state.mode === "song" && state.lick){
+      var beatSec = (state.msPerBeat ? state.msPerBeat : 500) / 1000;
+      var t = now;
+      for (var i = state.lickIndex; i < state.lick.notes.length; i++){
+        var item = state.lick.notes[i];
+        var n = parseNote(item.n);
+        var freq = midiToFreq(n.midi - 2); // klingende Bb-tone
+        var dur = item.b * beatSec;
+        playFrequency(ctx, freq, t, Math.max(dur - 0.05, 0.15));
+        t += dur;
+      }
+    } else {
+      playFrequency(ctx, midiToFreq(state.targetMidi), now, 0.9);
+    }
+  }
+  playBtn.addEventListener("click", playCurrentTones);
 
   function flashRed(){
     lampEl.className = "lamp red";
@@ -1318,6 +1384,8 @@
     modeSelect.disabled = false;
     genreSelect.disabled = false;
     skipBtn.style.display = "none";
+    playBtn.style.display = "none";
+    skipSongBtn.style.display = "none";
     lickTitleEl.style.display = "none";
     lampEl.className = "lamp";
     cardEl.className = "card";
@@ -1346,6 +1414,8 @@
       nextNote();
     }
   });
+
+  skipSongBtn.addEventListener("click", skipSong);
 
   // ---------- LOGIN / GATE ----------
   var authGate = document.getElementById("authGate");
