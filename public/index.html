@@ -373,10 +373,23 @@
   .notehead.state-current{fill:var(--brass-dark);opacity:1;}
   .notehead.state-hit{fill:var(--green);opacity:1;}
   .notehead.state-missed{fill:var(--red);opacity:.6;}
+  /* åpne notehoder (halvnote/helnote): fylles med papirfargen så de fremstår hule,
+     med konturfarge i stedet for fyllfarge for tilstandene */
+  .notehead.open{fill:var(--paper);stroke-width:2.2;stroke:var(--ink-text);}
+  .notehead.open.state-upcoming{fill:var(--paper);stroke:var(--ink-text);opacity:.35;}
+  .notehead.open.state-current{fill:var(--paper);stroke:var(--brass-dark);opacity:1;}
+  .notehead.open.state-hit{fill:var(--paper);stroke:var(--green);opacity:1;}
+  .notehead.open.state-missed{fill:var(--paper);stroke:var(--red);opacity:.6;}
   .ledger.state-upcoming{opacity:.35;}
   .ledger.state-current{opacity:1;}
   .ledger.state-hit{opacity:1;}
   .ledger.state-missed{opacity:.6;}
+  .timesig{fill:var(--ink-text);font-family:'Fraunces',serif;}
+  .rest-mark{fill:var(--ink-text);stroke:var(--ink-text);opacity:.85;}
+  .rest-mark.state-upcoming{opacity:.35;}
+  .rest-mark.state-current{fill:var(--brass-dark);stroke:var(--brass-dark);opacity:1;}
+  .rest-mark.state-hit{fill:var(--green);stroke:var(--green);opacity:1;}
+  .rest-mark.state-missed{fill:var(--red);stroke:var(--red);opacity:.6;}
   .lick-summary{
     text-align:center;font-family:'Fraunces',serif;font-weight:600;font-size:16px;
     color:var(--ink-text);margin-top:6px;
@@ -412,9 +425,14 @@
   #registerBtn{background:var(--ink-3);color:var(--paper);border:1px solid #3a4753;}
   .auth-error{color:#b23b3b;font-size:12.5px;min-height:16px;margin-top:8px;}
   .btn-skip-auth{
-    display:block;width:100%;margin-top:14px;background:transparent;color:#6b5d47;
-    border:1px solid #cbb98f;font-size:12.5px;padding:9px;
+    display:block;width:100%;font-size:15px;padding:14px;margin-bottom:4px;
   }
+  .btn-skip-auth small{display:block;font-size:11.5px;font-weight:500;opacity:.75;margin-top:2px;}
+  .auth-divider{
+    display:flex;align-items:center;gap:10px;margin:18px 0 14px;
+    font-size:11.5px;color:#8a7a5a;text-transform:uppercase;letter-spacing:.4px;
+  }
+  .auth-divider::before,.auth-divider::after{content:"";flex:1;height:1px;background:#d8c9a3;}
 
   @media (max-width:480px){
     .note-name{font-size:28px;}
@@ -428,18 +446,19 @@
 
 <div class="auth-gate" id="authGate">
   <div class="auth-card">
-    <h2>Logg inn eller øv med en gang</h2>
-    <p>Logg inn (eller registrer ny bruker) for å lagre øvingshistorikken din. Eller hopp over og øv umiddelbart – da lagres ingen historikk.</p>
+    <h2>Kornettøving</h2>
+    <button type="button" id="skipAuthBtn" class="btn-skip-auth btn-start">▶ Øv nå<small>Ingen innlogging – ingen historikk lagres</small></button>
+    <div class="auth-divider">eller logg inn</div>
+    <p>Logg inn (eller registrer ny bruker) for å lagre øvingshistorikken din over tid.</p>
     <form id="authForm">
       <input id="authUsername" placeholder="Brukernavn" autocomplete="username" required>
       <input id="authPassword" type="password" placeholder="Passord" autocomplete="current-password" required>
       <div class="auth-buttons">
-        <button type="submit" id="loginBtn" class="btn-start">Logg inn</button>
+        <button type="submit" id="loginBtn" class="btn-stop">Logg inn</button>
         <button type="button" id="registerBtn">Registrer ny bruker</button>
       </div>
     </form>
     <div class="auth-error" id="authError"></div>
-    <button type="button" id="skipAuthBtn" class="btn-skip-auth">Hopp over – øv nå uten historikk</button>
   </div>
 </div>
 
@@ -470,6 +489,7 @@
         <option value="jazz">Jazz-frase</option>
       </select>
       <button id="startBtn" class="btn-start">Start øving</button>
+      <button id="startNoTimerBtn" class="btn-stop">Start uten timer</button>
       <button id="stopBtn" class="btn-stop" disabled>Avslutt</button>
     </div>
   </header>
@@ -484,7 +504,7 @@
       <div class="name-row">
         <div class="note-name" id="noteName">–</div>
       </div>
-      <div class="note-name-alt" id="noteAlt" style="text-align:center;margin-top:2px;">Trykk «Start øving» og gi mikrofon-tilgang</div>
+      <div class="note-name-alt" id="noteAlt" style="text-align:center;margin-top:2px;">Trykk «Start øving» eller «Start uten timer», og gi mikrofon-tilgang</div>
     </div>
   </div>
 
@@ -509,7 +529,7 @@
     <button class="btn-skip" id="skipSongBtn" style="display:none;">Hopp over sang →</button>
   </div>
 
-  <div class="goal-card">
+  <div class="goal-card" id="goalCard">
     <div class="goal-top">
       <div>
         <div class="goal-label">Øktens øvingstid <span style="color:var(--muted-2);">(minimum: 5 min)</span></div>
@@ -541,7 +561,7 @@
   <footer>
     <b>Slik virker det:</b> Kornett er et Bb-instrument – tonen som klinger er et heltrinn lavere enn den som skrives. Notebildet viser skrevet tone, og appen lytter etter den faktiske klingende tonen fra mikrofonen. Lampen lyser grønt når riktig tone holdes stabilt, rødt ved feil tone. Neste note kommer automatisk. Fungerer best i Chrome, i et rolig rom, med mikrofontilgang tillatt.
     <br><br>
-    <b>Låt-modus:</b> viser en kort, kjent frase i stedet for tilfeldige enkelttoner – hele frasen tegnes på notesystemet, og gjeldende tone er uthevet. Toner som treffes riktig blir grønne, hoppet-over toner blir røde. Timingen vurderes fleksibelt ut fra avstanden mellom tonene sammenlignet med frasens rytme – ikke et strengt klokkeslett – siden mikrofon-gjenkjenning alltid har litt forsinkelse.
+    <b>Låt-modus:</b> viser en kort, kjent frase i stedet for tilfeldige enkelttoner – hele frasen tegnes med riktig notasjon i 4/4-takt, med taktstreker, hel-/halv-/fjerdedels-/åttendedelsnoter og pauser, og gjeldende tone er uthevet. Pauser spilles ikke – appen venter selv i pausens lengde og går videre automatisk. Toner som treffes riktig blir grønne, hoppet-over toner blir røde. Timingen vurderes fleksibelt ut fra avstanden mellom tonene sammenlignet med frasens rytme – ikke et strengt klokkeslett – siden mikrofon-gjenkjenning alltid har litt forsinkelse.
   </footer>
 </div>
 
@@ -582,14 +602,14 @@
       {
         name: "Smoke on the Water", artist: "Deep Purple",
         notes: [
-          {n:"G4",b:1},{n:"A#4",b:1},{n:"C5",b:1.5},
+          {n:"G4",b:1},{n:"A#4",b:1},{n:"C5",b:1},
           {n:"G4",b:1},{n:"A#4",b:1},{n:"C#5",b:1},{n:"C5",b:2}
         ]
       },
       {
         name: "Seven Nation Army", artist: "The White Stripes",
         notes: [
-          {n:"E4",b:1.5},{n:"E4",b:1},{n:"G4",b:1},{n:"E4",b:1},
+          {n:"E4",b:1},{n:"E4",b:1},{n:"G4",b:1},{n:"E4",b:1},
           {n:"D4",b:1},{n:"C4",b:1},{n:"B3",b:2}
         ]
       },
@@ -597,49 +617,49 @@
         name: "Pentatonic rock-lick", artist: "klassisk rock-vokabular",
         notes: [
           {n:"E4",b:1},{n:"G4",b:1},{n:"A4",b:1},{n:"B4",b:1},{n:"A4",b:1},{n:"E4",b:2}
-        ]
+        ,{rest:true,b:1}]
       },
       {
         name: "Power chord-riff", artist: "klassisk rock-vokabular",
         notes: [
           {n:"D4",b:1},{n:"D4",b:1},{n:"F4",b:1},{n:"G4",b:1},{n:"D4",b:2}
-        ]
+        ,{rest:true,b:2}]
       },
       {
         name: "Bluesy rock-vending", artist: "klassisk rock-vokabular",
         notes: [
           {n:"A4",b:1},{n:"C5",b:1},{n:"D5",b:1},{n:"C5",b:1},{n:"A4",b:2}
-        ]
+        ,{rest:true,b:2}]
       },
       {
         name: "Anthem-riff", artist: "klassisk rock-vokabular",
         notes: [
           {n:"G4",b:1},{n:"A4",b:1},{n:"C5",b:1},{n:"B4",b:1},{n:"G4",b:2}
-        ]
+        ,{rest:true,b:2}]
       },
       {
         name: "Driving åttendedeler", artist: "klassisk rock-vokabular",
         notes: [
           {n:"E4",b:0.5},{n:"E4",b:0.5},{n:"G4",b:0.5},{n:"E4",b:0.5},{n:"F#4",b:0.5},{n:"E4",b:0.5},{n:"D4",b:2}
-        ]
+        ,{rest:true,b:3}]
       },
       {
         name: "Stadium-hook", artist: "klassisk rock-vokabular",
         notes: [
           {n:"C4",b:1},{n:"D4",b:1},{n:"E4",b:1},{n:"G4",b:1},{n:"E4",b:2}
-        ]
+        ,{rest:true,b:2}]
       },
       {
         name: "Garasjerock-riff", artist: "klassisk rock-vokabular",
         notes: [
           {n:"A3",b:1},{n:"C4",b:1},{n:"D4",b:1},{n:"E4",b:1},{n:"D4",b:1},{n:"A3",b:2}
-        ]
+        ,{rest:true,b:1}]
       },
       {
         name: "Punk-progresjon", artist: "klassisk rock-vokabular",
         notes: [
           {n:"G3",b:1},{n:"A#3",b:1},{n:"C4",b:1},{n:"D4",b:1},{n:"G3",b:2}
-        ]
+        ,{rest:true,b:2}]
       }
     ],
     blues: [
@@ -647,61 +667,61 @@
         name: "Blues-vending", artist: "klassisk blues-vokabular",
         notes: [
           {n:"C4",b:1},{n:"D#4",b:1},{n:"F4",b:1},{n:"F#4",b:1},{n:"G4",b:2}
-        ]
+        ,{rest:true,b:2}]
       },
       {
         name: "Call & response", artist: "klassisk blues-vokabular",
         notes: [
           {n:"G4",b:1},{n:"A#4",b:1},{n:"C5",b:1},{n:"A#4",b:1},{n:"G4",b:2}
-        ]
+        ,{rest:true,b:2}]
       },
       {
         name: "Turnaround i dur-moll", artist: "klassisk blues-vokabular",
         notes: [
           {n:"A4",b:1},{n:"G4",b:1},{n:"F4",b:1},{n:"E4",b:2}
-        ]
+        ,{rest:true,b:3}]
       },
       {
         name: "Shuffle-groove", artist: "klassisk blues-vokabular",
         notes: [
           {n:"C4",b:1},{n:"E4",b:0.5},{n:"F4",b:0.5},{n:"G4",b:1},{n:"E4",b:2}
-        ]
+        ,{rest:true,b:3}]
       },
       {
         name: "Langsom klagesang", artist: "klassisk blues-vokabular",
         notes: [
           {n:"D#4",b:2},{n:"D4",b:1},{n:"C4",b:2}
-        ]
+        ,{rest:true,b:3}]
       },
       {
         name: "Boogie-basslinje", artist: "klassisk blues-vokabular",
         notes: [
           {n:"G3",b:1},{n:"B3",b:1},{n:"C4",b:1},{n:"D4",b:1},{n:"C4",b:1},{n:"B3",b:1}
-        ]
+        ,{rest:true,b:2}]
       },
       {
         name: "Chicago-lick", artist: "klassisk blues-vokabular",
         notes: [
           {n:"F4",b:1},{n:"G#4",b:1},{n:"A4",b:1},{n:"C5",b:1},{n:"A4",b:2}
-        ]
+        ,{rest:true,b:2}]
       },
       {
         name: "Delta-frase", artist: "klassisk blues-vokabular",
         notes: [
           {n:"A3",b:1.5},{n:"C4",b:1},{n:"D4",b:1},{n:"D#4",b:0.5},{n:"D4",b:2}
-        ]
+        ,{rest:true,b:2}]
       },
       {
         name: "Avsluttende vending", artist: "klassisk blues-vokabular",
         notes: [
           {n:"E4",b:1},{n:"D#4",b:1},{n:"D4",b:1},{n:"C4",b:2}
-        ]
+        ,{rest:true,b:3}]
       },
       {
         name: "Moll-blues-klage", artist: "klassisk blues-vokabular",
         notes: [
           {n:"D4",b:1},{n:"F4",b:1},{n:"G4",b:1},{n:"G#4",b:1},{n:"G4",b:2}
-        ]
+        ,{rest:true,b:2}]
       }
     ],
     jazz: [
@@ -709,37 +729,37 @@
         name: "ii-V-I-frase", artist: "klassisk jazz-vokabular",
         notes: [
           {n:"D4",b:1},{n:"F4",b:1},{n:"A4",b:1},{n:"G4",b:1},{n:"B3",b:1},{n:"C4",b:2}
-        ]
+        ,{rest:true,b:1}]
       },
       {
         name: "Bebop-løp", artist: "klassisk jazz-vokabular",
         notes: [
           {n:"C4",b:1},{n:"D4",b:1},{n:"E4",b:1},{n:"G4",b:1},{n:"E4",b:1},{n:"C4",b:2}
-        ]
+        ,{rest:true,b:1}]
       },
       {
         name: "Autumn Leaves-frase", artist: "klassisk jazz-vokabular",
         notes: [
           {n:"G4",b:1},{n:"C4",b:1},{n:"F4",b:1},{n:"B3",b:1},{n:"E4",b:2}
-        ]
+        ,{rest:true,b:2}]
       },
       {
         name: "Blue Bossa-frase", artist: "klassisk jazz-vokabular",
         notes: [
           {n:"C4",b:1},{n:"D#4",b:1},{n:"F4",b:1},{n:"F#4",b:1},{n:"G4",b:2}
-        ]
+        ,{rest:true,b:2}]
       },
       {
         name: "Swingende motiv", artist: "klassisk jazz-vokabular",
         notes: [
           {n:"A4",b:1},{n:"G4",b:0.5},{n:"F#4",b:0.5},{n:"E4",b:1},{n:"D4",b:2}
-        ]
+        ,{rest:true,b:3}]
       },
       {
         name: "Modal vamp", artist: "klassisk jazz-vokabular",
         notes: [
           {n:"D4",b:1},{n:"E4",b:1},{n:"G4",b:1},{n:"A4",b:1},{n:"G4",b:2}
-        ]
+        ,{rest:true,b:2}]
       },
       {
         name: "Kromatisk løp", artist: "klassisk jazz-vokabular",
@@ -751,19 +771,19 @@
         name: "Walking bass-frase", artist: "klassisk jazz-vokabular",
         notes: [
           {n:"G3",b:1},{n:"A3",b:1},{n:"B3",b:1},{n:"C4",b:1},{n:"D4",b:2}
-        ]
+        ,{rest:true,b:2}]
       },
       {
         name: "Turnaround i swing", artist: "klassisk jazz-vokabular",
         notes: [
           {n:"E4",b:1},{n:"A4",b:1},{n:"D4",b:1},{n:"G4",b:1},{n:"C4",b:2}
-        ]
+        ,{rest:true,b:2}]
       },
       {
         name: "Bebop-avslutning", artist: "klassisk jazz-vokabular",
         notes: [
           {n:"F4",b:1},{n:"E4",b:1},{n:"D4",b:1},{n:"C#4",b:1},{n:"D4",b:2}
-        ]
+        ,{rest:true,b:2}]
       }
     ]
   };
@@ -819,12 +839,75 @@
     return steps;
   }
 
-  function drawNoteAt(note, cx, stateClass, ledgerHalfWidth){
+  // ---------- RYTMEMOTOR (Låt-modus: 4/4-takt, taktstreker, korrekte notelengder) ----------
+  // Klassifiserer et "b"-tall (antall fjerdedelsslag) til faktisk notasjon: åpen/fylt
+  // notehode, med/uten hals, antall flagg (åttendedeler) og evt. forlengelsesprikk.
+  var MEASURE_BEATS = 4; // 4/4-takt
+  function durationInfo(b){
+    var EPS = 0.001;
+    function near(x){ return Math.abs(b - x) < EPS; }
+    if (near(4))    return {beats:4,    open:true,  stem:false, flags:0, dots:0}; // helnote
+    if (near(3))    return {beats:3,    open:true,  stem:true,  flags:0, dots:1}; // prikket halvnote
+    if (near(2))    return {beats:2,    open:true,  stem:true,  flags:0, dots:0}; // halvnote
+    if (near(1.5))  return {beats:1.5,  open:false, stem:true,  flags:0, dots:1}; // prikket fjerdedel
+    if (near(1))    return {beats:1,    open:false, stem:true,  flags:0, dots:0}; // fjerdedel
+    if (near(0.75)) return {beats:0.75, open:false, stem:true,  flags:1, dots:1}; // prikket åttendedel
+    if (near(0.5))  return {beats:0.5,  open:false, stem:true,  flags:1, dots:0}; // åttendedel
+    return {beats:b, open:false, stem:true, flags:0, dots:0}; // fallback
+  }
+
+  function drawTimeSignature(x){
+    var top = el("text",{x:x,y:86,"font-size":27,"font-weight":700,"text-anchor":"middle",class:"timesig"});
+    top.textContent = "4";
+    var bot = el("text",{x:x,y:122,"font-size":27,"font-weight":700,"text-anchor":"middle",class:"timesig"});
+    bot.textContent = "4";
+    staffSvg.appendChild(top);
+    staffSvg.appendChild(bot);
+  }
+
+  function drawBarline(x, isFinal){
+    staffSvg.appendChild(el("line",{x1:x,x2:x,y1:LINE_Y[0],y2:LINE_Y[4],stroke:"var(--ink-text)","stroke-width":1.6}));
+    if (isFinal){
+      staffSvg.appendChild(el("line",{x1:x+5,x2:x+5,y1:LINE_Y[0],y2:LINE_Y[4],stroke:"var(--ink-text)","stroke-width":4}));
+    }
+  }
+
+  // Pauser har fast vertikal plassering i notesystemet (uavhengig av tonehøyde), i tråd
+  // med vanlig notasjonskonvensjon: helnote-pause henger under D5-linjen, halvnote-pause
+  // står oppå B4-linjen (midtlinjen), fjerdedel er en sikksakk-glyf og åttendedel er en
+  // diagonal strek med flagg, begge sentrert rundt midtlinjen.
+  function drawRestAt(cx, durInfo, stateClass){
+    var g = el("g",{});
+    var cls = "rest-mark" + (stateClass ? (" " + stateClass) : "");
+    var midY = LINE_Y[2];
+    if (durInfo.beats >= 4){
+      g.appendChild(el("rect",{x:cx-7,y:LINE_Y[1],width:14,height:7,class:cls}));
+    } else if (durInfo.beats >= 2){
+      g.appendChild(el("rect",{x:cx-7,y:LINE_Y[2]-7,width:14,height:7,class:cls}));
+    } else if (durInfo.beats >= 1){
+      var qd = "M "+(cx-3)+","+(midY-16)+" L "+(cx+8)+","+(midY-5)+
+        " C "+(cx-1)+","+(midY-2)+" "+(cx-3)+","+(midY+4)+" "+(cx+6)+","+(midY+7)+
+        " C "+(cx-3)+","+(midY+10)+" "+(cx-5)+","+(midY+15)+" "+(cx+4)+","+(midY+20)+
+        " L "+(cx-6)+","+(midY+31);
+      g.appendChild(el("path",{d:qd, fill:"none", "stroke-width":2.8, "stroke-linecap":"round", "stroke-linejoin":"round", class:cls}));
+    } else {
+      g.appendChild(el("path",{d:"M "+(cx-7)+","+(midY+20)+" L "+(cx+2)+","+(midY-12), fill:"none", "stroke-width":2.6, "stroke-linecap":"round", class:cls}));
+      g.appendChild(el("ellipse",{cx:cx+2, cy:midY-14, rx:4, ry:3, transform:"rotate(35 "+(cx+2)+" "+(midY-14)+")", class:cls}));
+    }
+    if (durInfo.dots){
+      g.appendChild(el("circle",{cx:cx+18, cy:midY, r:2.4, class:cls}));
+    }
+    staffSvg.appendChild(g);
+    return g;
+  }
+
+  function drawNoteAt(note, cx, stateClass, ledgerHalfWidth, durInfo){
+    durInfo = durInfo || {beats:1, open:false, stem:true, flags:0, dots:0};
     var g = el("g",{});
     var y = BASE_Y - note.diatonicStep * STEP_PX;
     var lw = ledgerHalfWidth || 22;
     var ledgerCls = stateClass ? ("ledger " + stateClass) : "ledger";
-    var noteheadCls = stateClass ? ("notehead " + stateClass) : "notehead";
+    var noteheadCls = "notehead" + (durInfo.open ? " open" : "") + (stateClass ? (" " + stateClass) : "");
 
     var ledgers = ledgerSteps(note.diatonicStep);
     ledgers.forEach(function(s){
@@ -840,12 +923,29 @@
 
     g.appendChild(el("ellipse",{cx:cx,cy:y,rx:11,ry:8,class:noteheadCls,transform:"rotate(-18 "+cx+" "+y+")"}));
 
-    // stem
+    // hals + evt. flagg. Denne enkle notasjonsmotoren bjelker ikke sammen åttendedeler,
+    // hver får sitt eget flagg – musikalsk gyldig notasjon, bare litt mindre kompakt.
     var stemUp = note.diatonicStep < 4;
-    var stemX = stemUp ? cx+10.5 : cx-10.5;
-    var stemY1 = y;
-    var stemY2 = stemUp ? y-46 : y+46;
-    g.appendChild(el("line",{x1:stemX,x2:stemX,y1:stemY1,y2:stemY2,stroke:"var(--ink-text)","stroke-width":1.8}));
+    if (durInfo.stem){
+      var stemX = stemUp ? cx+10.5 : cx-10.5;
+      var stemY1 = y;
+      var stemY2 = stemUp ? y-46 : y+46;
+      g.appendChild(el("line",{x1:stemX,x2:stemX,y1:stemY1,y2:stemY2,stroke:"var(--ink-text)","stroke-width":1.8}));
+      if (durInfo.flags > 0){
+        var flagPath = stemUp
+          ? ("M "+stemX+","+stemY2+" C "+(stemX+10)+","+(stemY2+6)+" "+(stemX+9)+","+(stemY2+16)+" "+stemX+","+(stemY2+22))
+          : ("M "+stemX+","+stemY2+" C "+(stemX-10)+","+(stemY2-6)+" "+(stemX-9)+","+(stemY2-16)+" "+stemX+","+(stemY2-22));
+        g.appendChild(el("path",{d:flagPath, fill:"none", stroke:"var(--ink-text)", "stroke-width":1.8, "stroke-linecap":"round"}));
+      }
+    }
+
+    // forlengelsesprikk (prikket fjerdedel/halvnote) – i mellomrommet over hvis noten
+    // sitter på en linje, ellers rett ved siden av
+    if (durInfo.dots){
+      var onLine = Math.abs(Math.round(note.diatonicStep)) % 2 === 0;
+      var dotY = onLine ? y - STEP_PX*0.9 : y;
+      g.appendChild(el("circle",{cx:cx+18, cy:dotY, r:2.4, fill:"var(--ink-text)"}));
+    }
 
     staffSvg.appendChild(g);
     return g;
@@ -859,17 +959,41 @@
     g.setAttribute("id", "noteGroup");
   }
 
+  // Låt-modus tegnes med reell rytmisk plassering: hver tone/pause får en x-posisjon
+  // proporsjonal med sin varighet (ikke jevnt fordelt per indeks), og det settes
+  // taktstrek etter hver fulle 4/4-takt, med dobbel sluttstrek helt til slutt.
   function drawLick(lick, states){
     drawStaff();
-    var count = lick.notes.length;
-    var xStart = count > 1 ? 150 : 320;
-    var xEnd = 520;
-    var step = count > 1 ? (xEnd - xStart) / (count - 1) : 0;
-    var lw = count > 5 ? 16 : 22;
-    lick.notes.forEach(function(item, i){
-      var note = parseNote(item.n);
-      var cx = count > 1 ? (xStart + step * i) : xStart;
-      drawNoteAt(note, cx, "state-" + (states[i] || "upcoming"), lw);
+    var xStart = 165, xEnd = 560;
+    drawTimeSignature(135);
+
+    var items = lick.notes;
+    var durInfos = items.map(function(it){ return durationInfo(it.b); });
+    var totalBeats = durInfos.reduce(function(sum,d){ return sum + d.beats; }, 0);
+    var numMeasures = Math.max(1, Math.round(totalBeats / MEASURE_BEATS));
+    var barlineGap = 14;
+    var availWidth = Math.max(40, (xEnd - xStart) - numMeasures * barlineGap);
+    var pxPerBeat = availWidth / totalBeats;
+    var lw = items.length > 5 ? 16 : 22;
+
+    var xCursor = xStart;
+    var beatsInMeasure = 0;
+    items.forEach(function(item, i){
+      var di = durInfos[i];
+      var stateClass = "state-" + (states[i] || "upcoming");
+      if (item.rest){
+        drawRestAt(xCursor, di, stateClass);
+      } else {
+        var note = parseNote(item.n);
+        drawNoteAt(note, xCursor, stateClass, lw, di);
+      }
+      xCursor += di.beats * pxPerBeat;
+      beatsInMeasure += di.beats;
+      if (beatsInMeasure >= MEASURE_BEATS - 0.001){
+        drawBarline(xCursor + barlineGap/2, i === items.length - 1);
+        xCursor += barlineGap;
+        beatsInMeasure = 0;
+      }
     });
   }
 
@@ -901,7 +1025,10 @@
     lickHits: 0,
     lickTimingJudged: 0,
     lickTimingHits: 0,
-    lastLickKey: null
+    lastLickKey: null,
+    currentIsRest: false,
+    restTimeout: null,
+    timerEnabled: true
   };
 
   var noteNameEl = document.getElementById("noteName");
@@ -936,7 +1063,9 @@
   var skipSongBtn = document.getElementById("skipSongBtn");
   var playBtn = document.getElementById("playBtn");
   var startBtn = document.getElementById("startBtn");
+  var startNoTimerBtn = document.getElementById("startNoTimerBtn");
   var stopBtn = document.getElementById("stopBtn");
+  var goalCardEl = document.getElementById("goalCard");
   var levelSelect = document.getElementById("levelSelect");
   var modeSelect = document.getElementById("modeSelect");
   var genreSelect = document.getElementById("genreSelect");
@@ -1188,10 +1317,10 @@
   }
 
   function showLickNote(){
+    // Rydd opp evt. ventende auto-avansering fra en pause som ble hoppet forbi
+    if (state.restTimeout){ clearTimeout(state.restTimeout); state.restTimeout = null; }
+
     var item = state.lick.notes[state.lickIndex];
-    var note = parseNote(item.n);
-    state.current = note;
-    state.targetMidi = note.midi - 2; // Bb transposition: sounds a whole tone lower
     state.resolved = false;
     state.detectHistory = [];
     state.noteStart = performance.now();
@@ -1200,16 +1329,51 @@
     hideIcon();
     state.lickStates[state.lickIndex] = "current";
     drawLick(state.lick, state.lickStates);
-    noteNameEl.innerHTML = norwegianName(note.midi) + "<sub>" + note.octave + "</sub>";
-    noteAltEl.textContent = "Tone " + (state.lickIndex+1) + "/" + state.lick.notes.length +
-      "  ·  klinger: " + norwegianName(state.targetMidi) + noteOctaveOf(state.targetMidi);
     skipBtn.style.display = "inline-block";
     playBtn.style.display = "inline-block";
     skipSongBtn.style.display = "inline-block";
+
+    if (item.rest){
+      // Pauser skal ikke spilles – appen venter selv i pausens lengde og går videre.
+      state.current = null;
+      state.currentIsRest = true;
+      state.targetMidi = null;
+      noteNameEl.innerHTML = "𝄽";
+      noteAltEl.textContent = "Pause " + (state.lickIndex+1) + "/" + state.lick.notes.length;
+      var beatMs = state.msPerBeat || 500;
+      var waitMs = Math.max(250, item.b * beatMs);
+      state.restTimeout = setTimeout(function(){
+        state.restTimeout = null;
+        if (!state.audioCtx || state.resolved) return;
+        state.resolved = true;
+        state.lickStates[state.lickIndex] = "hit";
+        state.lastOnset = performance.now();
+        drawLick(state.lick, state.lickStates);
+        setTimeout(function(){
+          if (!state.audioCtx) return;
+          if (state.lickIndex < state.lick.notes.length - 1){
+            state.lickIndex++;
+            showLickNote();
+          } else {
+            finishLick();
+          }
+        }, 150);
+      }, waitMs);
+      return;
+    }
+
+    state.currentIsRest = false;
+    var note = parseNote(item.n);
+    state.current = note;
+    state.targetMidi = note.midi - 2; // Bb transposition: sounds a whole tone lower
+    noteNameEl.innerHTML = norwegianName(note.midi) + "<sub>" + note.octave + "</sub>";
+    noteAltEl.textContent = "Tone " + (state.lickIndex+1) + "/" + state.lick.notes.length +
+      "  ·  klinger: " + norwegianName(state.targetMidi) + noteOctaveOf(state.targetMidi);
   }
 
   function skipSong(){
     if (!state.audioCtx || state.mode !== "song" || !state.lick) return;
+    if (state.restTimeout){ clearTimeout(state.restTimeout); state.restTimeout = null; }
     for (var i = state.lickIndex; i < state.lickStates.length; i++){
       state.lickStates[i] = "missed";
     }
@@ -1218,7 +1382,7 @@
   }
 
   function finishLick(){
-    var total = state.lick.notes.length;
+    var total = state.lick.notes.filter(function(it){ return !it.rest; }).length;
     var timingText = state.lickTimingJudged > 0
       ? (" Timing: " + state.lickTimingHits + "/" + state.lickTimingJudged + " gode.")
       : "";
@@ -1337,19 +1501,22 @@
     osc.stop(startTime + duration + 0.02);
   }
   function playCurrentTones(){
-    if (!state.current) return;
+    var inLick = state.mode === "song" && state.lick;
+    if (!state.current && !inLick) return;
     var ctx = getPlaybackCtx();
     var now = ctx.currentTime + 0.05;
-    if (state.mode === "song" && state.lick){
+    if (inLick){
       var beatSec = (state.msPerBeat ? state.msPerBeat : 500) / 1000;
       var t = now;
       for (var i = state.lickIndex; i < state.lick.notes.length; i++){
         var item = state.lick.notes[i];
-        var n = parseNote(item.n);
-        var freq = midiToFreq(n.midi - 2); // klingende Bb-tone
         var dur = item.b * beatSec;
-        playFrequency(ctx, freq, t, Math.max(dur - 0.05, 0.15));
-        t += dur;
+        if (!item.rest){
+          var n = parseNote(item.n);
+          var freq = midiToFreq(n.midi - 2); // klingende Bb-tone
+          playFrequency(ctx, freq, t, Math.max(dur - 0.05, 0.15));
+        }
+        t += dur; // pauser hopper over lyd, men flytter tidskursoren videre
       }
     } else {
       playFrequency(ctx, midiToFreq(state.targetMidi), now, 0.9);
@@ -1452,6 +1619,7 @@
     tunerLabel.textContent = norwegianName(rounded) + noteOctaveOf(rounded) + "  (" + (cents>=0?"+":"") + cents.toFixed(0) + " cent)";
 
     if (state.resolved) return;
+    if (state.currentIsRest) return; // ingen tone å treffe under en pause
 
     var now = performance.now();
     state.detectHistory.push({midi:rounded, t:now});
@@ -1520,13 +1688,15 @@
     state.genre = genreSelect.value;
   });
 
-  startBtn.addEventListener("click", function(){
+  function beginSession(withTimer){
     statusMsg.textContent = "Ber om mikrofontilgang …";
     statusMsg.className = "status-msg";
     startBtn.disabled = true;
+    startNoTimerBtn.disabled = true;
     startAudio().then(function(){
       statusMsg.textContent = "";
       startBtn.style.display = "none";
+      startNoTimerBtn.style.display = "none";
       stopBtn.disabled = false;
       levelSelect.disabled = true;
       modeSelect.disabled = true;
@@ -1537,7 +1707,13 @@
       statBest.textContent = "–";
       historyEl.innerHTML = "";
       startTimerLoop();
-      startGoalTimer();
+      state.timerEnabled = withTimer;
+      if (withTimer){
+        goalCardEl.style.display = "";
+        startGoalTimer();
+      } else {
+        goalCardEl.style.display = "none";
+      }
       if (state.mode === "song"){
         startLick(pickLick(state.genre));
       } else {
@@ -1547,15 +1723,22 @@
       statusMsg.textContent = "Fikk ikke tilgang til mikrofonen. Sjekk nettleserinnstillingene og prøv igjen.";
       statusMsg.className = "status-msg warn";
       startBtn.disabled = false;
+      startNoTimerBtn.disabled = false;
     });
-  });
+  }
+
+  startBtn.addEventListener("click", function(){ beginSession(true); });
+  startNoTimerBtn.addEventListener("click", function(){ beginSession(false); });
 
   stopBtn.addEventListener("click", function(){
     stopAudio();
-    stopGoalTimer();
+    if (state.timerEnabled) stopGoalTimer();
     if (state.timerInt) clearInterval(state.timerInt);
+    if (state.restTimeout){ clearTimeout(state.restTimeout); state.restTimeout = null; }
     startBtn.style.display = "inline-block";
+    startNoTimerBtn.style.display = "inline-block";
     startBtn.disabled = false;
+    startNoTimerBtn.disabled = false;
     stopBtn.disabled = true;
     levelSelect.disabled = false;
     modeSelect.disabled = false;
@@ -1564,12 +1747,13 @@
     playBtn.style.display = "none";
     skipSongBtn.style.display = "none";
     lickTitleEl.style.display = "none";
+    goalCardEl.style.display = "";
     lampEl.className = "lamp";
     cardEl.className = "card";
     hideIcon();
     screenFlash.className = "screen-flash";
     noteNameEl.textContent = "–";
-    noteAltEl.textContent = "Trykk «Start øving» og gi mikrofon-tilgang";
+    noteAltEl.textContent = "Trykk «Start øving» eller «Start uten timer», og gi mikrofon-tilgang";
     timerEl.innerHTML = "0.0<span>sek</span>";
     statusMsg.textContent = "Økten er avsluttet.";
     statusMsg.className = "status-msg";
@@ -1579,6 +1763,7 @@
   skipBtn.addEventListener("click", function(){
     if (!state.audioCtx) return;
     if (state.mode === "song"){
+      if (state.restTimeout){ clearTimeout(state.restTimeout); state.restTimeout = null; }
       state.lickStates[state.lickIndex] = "missed";
       state.lastOnset = null;
       if (state.lickIndex < state.lick.notes.length - 1){
