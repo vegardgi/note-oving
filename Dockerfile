@@ -4,6 +4,7 @@ COPY package.json ./
 RUN npm install --omit=dev
 COPY server.js ./
 COPY public ./public
+COPY lib ./lib
 ENV PORT=8080
 ENV DATA_DIR=/data
 EXPOSE 8080
