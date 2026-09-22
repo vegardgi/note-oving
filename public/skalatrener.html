@@ -65,6 +65,10 @@
   }
   h1 span{color:var(--brass-light);font-style:italic;font-weight:400;}
   .sub{font-size:12.5px;color:var(--muted);margin-top:2px;}
+  .streak-badge{
+    display:inline-flex;align-items:center;gap:5px;margin-top:6px;
+    font-size:12px;font-weight:600;color:var(--brass-light);
+  }
   .back-link{
     font-size:12.5px;color:var(--muted);text-decoration:none;
     border:1px solid #3a4753;border-radius:10px;padding:8px 12px;
@@ -302,6 +306,7 @@
       <div>
         <h1>Skala<span>trener</span></h1>
         <div class="sub">Velg toneart og skalatype. Klikk en tone for å høre den.</div>
+        <div class="streak-badge" id="streakBadge" style="display:none;"></div>
       </div>
     </div>
     <div class="controls">
@@ -544,12 +549,76 @@
   }
   function toggleLevelCompleted(id) {
     var i = progress.completed.indexOf(id);
-    if (i === -1) progress.completed.push(id);
+    var completingNow = i === -1;
+    if (completingNow) progress.completed.push(id);
     else progress.completed.splice(i, 1);
     saveProgress(progress.completed);
+    if (completingNow) markPracticeDay(); // kun når et nivå faktisk fullføres, ikke ved av-merking
     renderLevels();
   }
 
+  // ---------- DAGSSTREK ----------
+  // Egen lagring fra nivå-fremdriften over: en liste med datoer (lokal tid,
+  // ikke UTC) han faktisk har øvd. Streken regnes ut på visningstidspunktet,
+  // ikke lagret som et tall, så den alltid er riktig selv om han ikke åpner
+  // appen på flere dager.
+  var STREAK_KEY = "skalatrener-dagsstrek-v1";
+  function todayLocalISO(offsetDays) {
+    var d = new Date();
+    d.setDate(d.getDate() + (offsetDays || 0));
+    var tzAdjusted = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+    return tzAdjusted.toISOString().slice(0, 10);
+  }
+  function loadPracticeDays() {
+    try {
+      var raw = localStorage.getItem(STREAK_KEY);
+      var parsed = raw ? JSON.parse(raw) : null;
+      return (parsed && Array.isArray(parsed.days)) ? parsed.days : [];
+    } catch (e) {
+      return [];
+    }
+  }
+  function savePracticeDays(days) {
+    try {
+      localStorage.setItem(STREAK_KEY, JSON.stringify({ days: days }));
+    } catch (e) {
+      // privat nettlesing e.l. – dagsstreken lagres da bare for denne økten
+    }
+  }
+  var practiceDays = loadPracticeDays();
+
+  // Streken teller bakover fra i dag. Er dagens dato ikke registrert ennå,
+  // startes tellingen fra i går i stedet — streken "lever" til dagen er
+  // omme, den nullstilles ikke bare fordi han ikke har rukket å øve ennå i dag.
+  function computeStreak() {
+    var set = {};
+    practiceDays.forEach(function (d) { set[d] = true; });
+    var streak = 0;
+    var offset = set[todayLocalISO(0)] ? 0 : -1;
+    while (set[todayLocalISO(offset - streak)]) streak++;
+    return streak;
+  }
+
+  function renderStreakBadge() {
+    var streak = computeStreak();
+    if (practiceDays.length === 0) {
+      streakBadge.style.display = "none";
+      return;
+    }
+    streakBadge.style.display = "";
+    streakBadge.textContent = "🔥 " + streak + (streak === 1 ? " dag" : " dager") + " på rad · " + practiceDays.length + " økter totalt";
+  }
+
+  function markPracticeDay() {
+    var today = todayLocalISO(0);
+    if (practiceDays.indexOf(today) === -1) {
+      practiceDays.push(today);
+      savePracticeDays(practiceDays);
+    }
+    renderStreakBadge();
+  }
+
+  var streakBadge = document.getElementById("streakBadge");
   var explorerTabBtn = document.getElementById("explorerTabBtn");
   var levelsTabBtn = document.getElementById("levelsTabBtn");
   var sessionTabBtn = document.getElementById("sessionTabBtn");
@@ -1335,6 +1404,7 @@
     if (sessionState.timerId) clearInterval(sessionState.timerId);
     sessionState.timerId = null;
     sessionState.active = false;
+    markPracticeDay(); // hele 10-minutters økten er unnagjort – teller som en øvingsdag
     sessionPhaseLabel.textContent = "Økt fullført! 🎉";
     sessionPhaseNum.textContent = "Alle 4 deler er unnagjort.";
     sessionCountdown.textContent = "0:00";
@@ -1588,6 +1658,7 @@
   // ---------- START ----------
   updateRootOptions();
   rebuildScale();
+  renderStreakBadge();
 })();
 </script>
 </body>
