@@ -203,6 +203,41 @@
     margin-top:28px;font-size:12px;color:var(--muted);line-height:1.6;
   }
 
+  /* ---------- FANER (utforsker / nivåstige) ---------- */
+  .tabs{display:flex;gap:8px;margin-bottom:18px;}
+  .tabs button{
+    background:var(--ink-3);color:var(--muted);border:1px solid #3a4753;
+    padding:9px 16px;font-size:13.5px;
+  }
+  .tabs button.active{background:linear-gradient(180deg,var(--brass-light),var(--brass) 70%);color:#2c2013;border-color:transparent;}
+
+  /* ---------- NIVÅSTIGE ---------- */
+  .level-list{display:flex;flex-direction:column;gap:10px;}
+  .level-card{
+    background:linear-gradient(180deg,var(--paper),var(--paper-2));
+    border-radius:14px;padding:16px 18px;color:var(--ink-text);
+    box-shadow:0 10px 24px rgba(0,0,0,.35);
+    display:flex;flex-direction:column;gap:8px;
+  }
+  .level-card.locked{opacity:.5;}
+  .level-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+  .level-title{font-family:'Fraunces',serif;font-weight:600;font-size:16px;display:flex;align-items:center;gap:8px;}
+  .level-num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:24px;height:24px;border-radius:50%;
+    background:var(--ink-3);color:var(--paper);font-size:12px;font-weight:700;flex-shrink:0;
+  }
+  .level-card.completed .level-num{background:var(--green);color:#0b2416;}
+  .level-desc{font-size:13px;color:#5b4d38;line-height:1.4;}
+  .level-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+  .level-key-btn{
+    background:var(--ink-3);color:var(--paper);border:1px solid #3a4753;
+    padding:6px 12px;font-size:12.5px;
+  }
+  .level-complete-btn{font-size:12px;padding:7px 12px;margin-left:auto;}
+  .level-complete-btn.done{background:linear-gradient(180deg,var(--green),#1d8f4f);color:#0b2416;}
+  .locked-hint{font-size:12px;color:#8a7a5a;font-style:italic;}
+
   @media (max-width:560px){
     .note-col-label{font-size:11.5px;}
     h1{font-size:21px;}
@@ -226,39 +261,65 @@
     </div>
   </header>
 
-  <div class="controls" style="margin-bottom:16px;">
-    <select id="scaleTypeSelect" aria-label="Skalatype">
-      <option value="major" selected>Dur</option>
-      <option value="majorPentatonic">Dur-pentaton</option>
-      <option value="minorPentatonic">Moll-pentaton</option>
-      <option value="blues">Blues</option>
-    </select>
-    <select id="rootSelect" aria-label="Toneart"></select>
-    <button id="playScaleBtn" class="btn-start">▶ Spill opp og ned</button>
+  <div class="tabs" role="tablist" aria-label="Velg visning">
+    <button id="explorerTabBtn" class="active" type="button" role="tab" aria-selected="true">Utforsker</button>
+    <button id="levelsTabBtn" type="button" role="tab" aria-selected="false">Nivåstige</button>
   </div>
 
-  <div class="card">
-    <div class="clip"></div>
-    <div class="key-heading" id="keyHeading">–<small id="keySubheading"></small></div>
-    <svg class="staff" id="staffSvg" viewBox="0 0 600 190" role="img" aria-label="Notebilde av skalaen"></svg>
-    <div class="note-row" id="noteRow"></div>
-  </div>
+  <div id="explorerView">
 
-  <div class="meta-row">
-    <div class="toggle" role="group" aria-label="Skrevet eller klingende visning">
-      <button id="writtenToggleBtn" class="active" type="button">Skrevet</button>
-      <button id="soundingToggleBtn" type="button">Klingende</button>
+    <div class="controls" style="margin-bottom:16px;" id="scaleControls">
+      <select id="scaleTypeSelect" aria-label="Skalatype">
+        <option value="major" selected>Dur</option>
+        <option value="majorPentatonic">Dur-pentaton</option>
+        <option value="minorPentatonic">Moll-pentaton</option>
+        <option value="blues">Blues</option>
+        <option value="majorTriad">Treklang</option>
+        <option value="dorian">Dorisk</option>
+        <option value="mixolydian">Miksolydisk</option>
+      </select>
+      <select id="rootSelect" aria-label="Toneart"></select>
+      <button id="playScaleBtn" class="btn-start">▶ Spill opp og ned</button>
     </div>
-    <div class="tempo-row">
-      <label for="tempoRange">Tempo</label>
-      <input type="range" id="tempoRange" min="60" max="160" step="5" value="100">
-      <span id="tempoLabel">100 BPM</span>
+
+    <div class="controls" style="margin-bottom:16px;display:none;" id="melodyControls">
+      <span class="sub" id="melodyLabel" style="margin:0;"></span>
+      <select id="melodyKeySelect" aria-label="Toneart for melodi"></select>
+      <button id="playMelodyBtn" class="btn-start">▶ Spill melodien</button>
+      <button id="exitMelodyBtn" class="btn-stop" type="button">← Tilbake til vanlig utforsker</button>
     </div>
+
+    <div class="card">
+      <div class="clip"></div>
+      <div class="key-heading" id="keyHeading">–<small id="keySubheading"></small></div>
+      <svg class="staff" id="staffSvg" viewBox="0 0 600 190" role="img" aria-label="Notebilde av skalaen"></svg>
+      <div class="note-row" id="noteRow"></div>
+    </div>
+
+    <div class="meta-row">
+      <div class="toggle" role="group" aria-label="Skrevet eller klingende visning">
+        <button id="writtenToggleBtn" class="active" type="button">Skrevet</button>
+        <button id="soundingToggleBtn" type="button">Klingende</button>
+      </div>
+      <div class="tempo-row">
+        <label for="tempoRange">Tempo</label>
+        <input type="range" id="tempoRange" min="60" max="160" step="5" value="100">
+        <span id="tempoLabel">100 BPM</span>
+      </div>
+    </div>
+
+    <footer>
+      <b>Slik virker det:</b> Notene vises som standard i SKREVET tone for Bb-kornett. Ventildiagrammet under hver note viser hvilke ventiler som trykkes (fylt sirkel = trykket, 0 = løs). Noen toner har en alternativ fingersetting — den vises i parentes. «Klingende» bytter bare visningen av tonenavn og toneart, ikke fingersetting — fingersetting er alltid mot den skrevne tonen. Klikk en note (eller «Spill opp og ned») for å høre den. Fungerer best i Chrome, med lydtilgang tillatt av nettleseren ved første klikk.
+    </footer>
+
   </div>
 
-  <footer>
-    <b>Slik virker det:</b> Notene vises som standard i SKREVET tone for Bb-kornett. Ventildiagrammet under hver note viser hvilke ventiler som trykkes (fylt sirkel = trykket, 0 = løs). Noen toner har en alternativ fingersetting — den vises i parentes. «Klingende» bytter bare visningen av tonenavn og toneart, ikke fingersetting — fingersetting er alltid mot den skrevne tonen. Klikk en note (eller «Spill opp og ned») for å høre den. Fungerer best i Chrome, med lydtilgang tillatt av nettleseren ved første klikk.
-  </footer>
+  <div id="levelsView" style="display:none;">
+    <div class="level-list" id="levelList"></div>
+    <footer>
+      <b>Slik virker det:</b> Nivåene låses opp ett om gangen. Trykk på en toneart for å øve den i utforskeren, og merk nivået som fullført når du er klar for neste. Ingen innlogging — fremdriften lagres kun i denne nettleseren.
+    </footer>
+  </div>
 
 </div>
 
@@ -268,19 +329,90 @@
   "use strict";
   var MT = window.MusicTheory;
 
-  // ---------- TONEART-LISTER (kun tonearter som faktisk finnes i fasiten for hver skalatype) ----------
+  // ---------- TONEART-LISTER ----------
+  // Dur/dur-pentaton/moll-pentaton/blues: kun tonearter som faktisk finnes i
+  // fasitlistene i music-theory.js. Treklang/dorisk/miksolydisk er ikke en del
+  // av fasiten (se kommentaren ved SCALE_DEGREES i music-theory.js) — her
+  // brukes bare de tonartene nivåstigen faktisk trenger (kjente fingersett).
   var ROOTS_BY_SCALE_TYPE = {
     major: ["C", "F", "Bb", "Eb", "G", "D", "A", "Ab"],
     majorPentatonic: ["C", "F", "Bb", "Eb", "G", "D"],
-    minorPentatonic: ["A", "D", "E", "G", "C", "B"],
-    blues: ["C", "G", "D", "A", "F"]
+    minorPentatonic: ["A", "D", "E", "G", "C", "B", "Eb"],
+    blues: ["C", "G", "D", "A", "F"],
+    majorTriad: ["C", "F", "G", "Bb"],
+    dorian: ["D"],
+    mixolydian: ["G"]
   };
   var SCALE_TYPE_LABELS = {
     major: "dur",
     majorPentatonic: "dur-pentaton",
     minorPentatonic: "moll-pentaton",
-    blues: "blues"
+    blues: "blues",
+    majorTriad: "treklang",
+    dorian: "dorisk",
+    mixolydian: "miksolydisk"
   };
+
+  // ---------- NIVÅSTIGEN (8 trinn) ----------
+  // Trinnvis lås: nivå N er åpent når N===1 eller nivå N-1 er merket fullført.
+  // "Fullført" er ikke automatisk oppdaget (utforskeren kan ikke høre om han
+  // spiller riktig) — det merkes manuelt når han/dere er klare for neste nivå.
+  var LEVELS = [
+    { id: 1, title: "Pentaton i C og F", desc: "Dur-pentaton — den enkleste skalaen å improvisere fritt over.", combos: [{ scaleType: "majorPentatonic", root: "C" }, { scaleType: "majorPentatonic", root: "F" }] },
+    { id: 2, title: "Pentaton i Bb og G", desc: "Samme skalatype, nye tonearter.", combos: [{ scaleType: "majorPentatonic", root: "Bb" }, { scaleType: "majorPentatonic", root: "G" }] },
+    { id: 3, title: "Full durskala i C, F, G, Bb", desc: "Alle sju tonene — de fire tonartene du kommer til å bruke mest.", combos: [{ scaleType: "major", root: "C" }, { scaleType: "major", root: "F" }, { scaleType: "major", root: "G" }, { scaleType: "major", root: "Bb" }] },
+    { id: 4, title: "Treklanger i C, F, G, Bb", desc: "Durtreklangen (1-3-5) i de samme fire tonartene.", combos: [{ scaleType: "majorTriad", root: "C" }, { scaleType: "majorTriad", root: "F" }, { scaleType: "majorTriad", root: "G" }, { scaleType: "majorTriad", root: "Bb" }] },
+    { id: 5, title: "Bluesskala i C og G", desc: "Den karakteristiske blue note'n (b5) i tillegg til moll-pentaton.", combos: [{ scaleType: "blues", root: "C" }, { scaleType: "blues", root: "G" }] },
+    { id: 6, title: "Eb og D, moll-pentaton", desc: "To nye tonearter i moll-pentaton.", combos: [{ scaleType: "minorPentatonic", root: "Eb" }, { scaleType: "minorPentatonic", root: "D" }] },
+    { id: 7, title: "Dorisk og miksolydisk", desc: "To kirketonearter bygget over fingersett du allerede kan — D-dorisk og G-miksolydisk bruker kun toner fra C-dur.", combos: [{ scaleType: "dorian", root: "D" }, { scaleType: "mixolydian", root: "G" }] },
+    { id: 8, title: "Transponer en melodi til fem tonearter", desc: "«Stadium-hook» fra Låt-modus, spilt i fem forskjellige tonearter.", kind: "melody" }
+  ];
+  var MELODY = { name: "Stadium-hook", degreeIndices: [0, 1, 2, 4, 2], beats: [1, 1, 1, 1, 2] };
+  var MELODY_KEYS = ["C", "F", "G", "Bb", "D"];
+  var PROGRESS_KEY = "skalatrener-nivastige-v1";
+
+  function loadProgress() {
+    try {
+      var raw = localStorage.getItem(PROGRESS_KEY);
+      var parsed = raw ? JSON.parse(raw) : null;
+      return (parsed && Array.isArray(parsed.completed)) ? parsed.completed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+  function saveProgress(completed) {
+    try {
+      localStorage.setItem(PROGRESS_KEY, JSON.stringify({ completed: completed }));
+    } catch (e) {
+      // privat nettlesing e.l. – fremdrift lagres da bare for denne økten
+    }
+  }
+  var progress = { completed: loadProgress() };
+  function isLevelUnlocked(id) {
+    return id === 1 || progress.completed.indexOf(id - 1) !== -1;
+  }
+  function isLevelCompleted(id) {
+    return progress.completed.indexOf(id) !== -1;
+  }
+  function toggleLevelCompleted(id) {
+    var i = progress.completed.indexOf(id);
+    if (i === -1) progress.completed.push(id);
+    else progress.completed.splice(i, 1);
+    saveProgress(progress.completed);
+    renderLevels();
+  }
+
+  var explorerTabBtn = document.getElementById("explorerTabBtn");
+  var levelsTabBtn = document.getElementById("levelsTabBtn");
+  var explorerView = document.getElementById("explorerView");
+  var levelsView = document.getElementById("levelsView");
+  var levelList = document.getElementById("levelList");
+  var scaleControls = document.getElementById("scaleControls");
+  var melodyControls = document.getElementById("melodyControls");
+  var melodyLabel = document.getElementById("melodyLabel");
+  var melodyKeySelect = document.getElementById("melodyKeySelect");
+  var playMelodyBtn = document.getElementById("playMelodyBtn");
+  var exitMelodyBtn = document.getElementById("exitMelodyBtn");
 
   var scaleTypeSelect = document.getElementById("scaleTypeSelect");
   var rootSelect = document.getElementById("rootSelect");
@@ -299,7 +431,8 @@
     root: "C",
     display: "written", // "written" | "sounding"
     tempoBpm: 100,
-    scale: [] // liste av {name, octave, written, midi, fingering}
+    scale: [], // liste av {name, octave, written, midi, fingering}
+    melodyRoot: null // satt når nivå 8 (melodi-transponering) vises i stedet for en vanlig skala
   };
 
   // ---------- NOTASJON (gjenbruker samme SVG-oppskrift som index.html) ----------
@@ -473,6 +606,33 @@
     playbackTimer.push(setTimeout(stopScalePlayback, sequence.length * beatSec * 1000));
   }
 
+  // Spiller melodien (nivå 8) forlengs, med melodiens egne notelengder
+  // (MELODY.beats) i stedet for jevn opp/ned-avspilling som for en skala.
+  function playMelodySequence() {
+    if (playbackTimer) {
+      stopScalePlayback();
+      playMelodyBtn.textContent = "▶ Spill melodien";
+      return;
+    }
+    var ctx = getAudioCtx();
+    var beatSec = 60 / state.tempoBpm;
+    playbackTimer = [];
+    playMelodyBtn.textContent = "■ Stopp";
+    var t = 0;
+    state.scale.forEach(function (note, i) {
+      var dur = MELODY.beats[i] * beatSec;
+      playbackTimer.push(setTimeout(function () {
+        setPlayingIndex(i);
+        playFrequency(ctx, midiToFreq(note.midi - 2), ctx.currentTime + 0.02, dur * 0.85);
+      }, t * 1000));
+      t += dur;
+    });
+    playbackTimer.push(setTimeout(function () {
+      stopScalePlayback();
+      playMelodyBtn.textContent = "▶ Spill melodien";
+    }, t * 1000));
+  }
+
   // ---------- VENTILDIAGRAM + TONERAD ----------
   function valveDiagram(fingering) {
     var wrap = document.createElement("div");
@@ -557,6 +717,12 @@
   }
 
   function updateHeading() {
+    if (state.melodyRoot) {
+      var mSounding = MT.soundingKeyFor(state.melodyRoot);
+      keyHeading.textContent = "«" + MELODY.name + "» i " + (state.display === "written" ? state.melodyRoot : (mSounding || state.melodyRoot)) + "-dur";
+      keySubheading.textContent = state.display === "written" ? "skrevet for Bb-kornett" : "klingende";
+      return;
+    }
     var typeLabel = SCALE_TYPE_LABELS[state.scaleType];
     if (state.display === "written") {
       keyHeading.textContent = state.root + "-" + typeLabel;
@@ -568,8 +734,33 @@
     }
   }
 
+  // Bygger noter for melodi-nivået (nivå 8) ved å plukke skalatrinn-indekser
+  // (MELODY.degreeIndices) ut av en full dur-skala i valgt toneart — gjenbruker
+  // dermed generateScaleWithOctaves() i stedet for å transponere en fast
+  // MIDI-liste, så stavemåten blir riktig for hver toneart automatisk.
+  function melodyNotesFor(rootName, startOctave) {
+    var full = MT.generateScaleWithOctaves(rootName, "major", startOctave);
+    return MELODY.degreeIndices.map(function (i) { return full[i]; });
+  }
+
   function rebuildScale() {
     stopScalePlayback();
+    if (state.melodyRoot) {
+      state.scale = melodyNotesFor(state.melodyRoot, 4);
+      var soundingRoot = MT.soundingKeyFor(state.melodyRoot);
+      if (soundingRoot) {
+        var writtenRootMidi0 = MT.generateScaleWithOctaves(state.melodyRoot, "major", 4)[0].midi;
+        var soundingStartOctave0 = Math.floor((writtenRootMidi0 - 2) / 12) - 1;
+        state.soundingScale = melodyNotesFor(soundingRoot, soundingStartOctave0);
+      } else {
+        state.soundingScale = null;
+      }
+      updateHeading();
+      drawScaleOnStaff();
+      renderNoteRow();
+      wireStaffClicks();
+      return;
+    }
     state.scale = MT.generateScaleWithOctaves(state.root, state.scaleType, 4);
     var soundingRoot = MT.soundingKeyFor(state.root);
     if (soundingRoot) {
@@ -625,6 +816,129 @@
     state.tempoBpm = parseInt(tempoRange.value, 10);
     tempoLabel.textContent = state.tempoBpm + " BPM";
   });
+
+  // ---------- FANER ----------
+  function switchTab(name) {
+    var explorer = name === "explorer";
+    explorerView.style.display = explorer ? "" : "none";
+    levelsView.style.display = explorer ? "none" : "";
+    explorerTabBtn.classList.toggle("active", explorer);
+    levelsTabBtn.classList.toggle("active", !explorer);
+    explorerTabBtn.setAttribute("aria-selected", explorer ? "true" : "false");
+    levelsTabBtn.setAttribute("aria-selected", !explorer ? "true" : "false");
+    if (!explorer) renderLevels();
+  }
+  explorerTabBtn.addEventListener("click", function () { switchTab("explorer"); });
+  levelsTabBtn.addEventListener("click", function () { switchTab("levels"); });
+
+  function updateControlsVisibility() {
+    scaleControls.style.display = state.melodyRoot ? "none" : "";
+    melodyControls.style.display = state.melodyRoot ? "" : "none";
+  }
+
+  function openScaleInExplorer(scaleType, root) {
+    state.melodyRoot = null;
+    state.scaleType = scaleType;
+    scaleTypeSelect.value = scaleType;
+    updateRootOptions();
+    state.root = root;
+    rootSelect.value = root;
+    updateControlsVisibility();
+    switchTab("explorer");
+    rebuildScale();
+  }
+
+  function openMelodyInExplorer(root) {
+    state.melodyRoot = root;
+    melodyLabel.textContent = "«" + MELODY.name + "»:";
+    melodyKeySelect.value = root;
+    updateControlsVisibility();
+    switchTab("explorer");
+    rebuildScale();
+  }
+
+  MELODY_KEYS.forEach(function (k) {
+    var opt = document.createElement("option");
+    opt.value = k;
+    opt.textContent = k + "-dur";
+    melodyKeySelect.appendChild(opt);
+  });
+  melodyKeySelect.addEventListener("change", function () {
+    openMelodyInExplorer(melodyKeySelect.value);
+  });
+  playMelodyBtn.addEventListener("click", playMelodySequence);
+  exitMelodyBtn.addEventListener("click", function () {
+    state.melodyRoot = null;
+    updateControlsVisibility();
+    rebuildScale();
+  });
+
+  // ---------- NIVÅSTIGE-RENDERING ----------
+  function renderLevels() {
+    levelList.innerHTML = "";
+    LEVELS.forEach(function (level) {
+      var unlocked = isLevelUnlocked(level.id);
+      var completed = isLevelCompleted(level.id);
+
+      var card = document.createElement("div");
+      card.className = "level-card" + (unlocked ? "" : " locked") + (completed ? " completed" : "");
+
+      var top = document.createElement("div");
+      top.className = "level-top";
+      var title = document.createElement("div");
+      title.className = "level-title";
+      var num = document.createElement("span");
+      num.className = "level-num";
+      num.textContent = completed ? "✓" : String(level.id);
+      title.appendChild(num);
+      title.appendChild(document.createTextNode(level.title));
+      top.appendChild(title);
+      card.appendChild(top);
+
+      var desc = document.createElement("div");
+      desc.className = "level-desc";
+      desc.textContent = level.desc;
+      card.appendChild(desc);
+
+      if (!unlocked) {
+        var hint = document.createElement("div");
+        hint.className = "locked-hint";
+        hint.textContent = "Lås opp ved å fullføre forrige nivå.";
+        card.appendChild(hint);
+      } else {
+        var actions = document.createElement("div");
+        actions.className = "level-actions";
+        if (level.kind === "melody") {
+          MELODY_KEYS.forEach(function (root) {
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "level-key-btn";
+            btn.textContent = root + "-dur";
+            btn.addEventListener("click", function () { openMelodyInExplorer(root); });
+            actions.appendChild(btn);
+          });
+        } else {
+          level.combos.forEach(function (combo) {
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "level-key-btn";
+            btn.textContent = combo.root + " " + SCALE_TYPE_LABELS[combo.scaleType];
+            btn.addEventListener("click", function () { openScaleInExplorer(combo.scaleType, combo.root); });
+            actions.appendChild(btn);
+          });
+        }
+        var completeBtn = document.createElement("button");
+        completeBtn.type = "button";
+        completeBtn.className = "level-complete-btn btn-stop" + (completed ? " done" : "");
+        completeBtn.textContent = completed ? "✓ Fullført" : "Merk som fullført";
+        completeBtn.addEventListener("click", function () { toggleLevelCompleted(level.id); });
+        actions.appendChild(completeBtn);
+        card.appendChild(actions);
+      }
+
+      levelList.appendChild(card);
+    });
+  }
 
   // ---------- START ----------
   updateRootOptions();
