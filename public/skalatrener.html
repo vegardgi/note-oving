@@ -232,6 +232,11 @@
   .session-controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
   .session-controls button{font-size:12.5px;padding:8px 14px;}
   .session-controls button:disabled{opacity:.35;cursor:not-allowed;}
+  .improv-idea{
+    margin-top:10px;font-size:14px;font-weight:600;color:#2c2013;
+    background:linear-gradient(180deg,var(--brass-light),var(--brass) 70%);
+    border-radius:8px;padding:10px 12px;
+  }
 
   /* ---------- NIVÅSTIGE ---------- */
   .level-list{display:flex;flex-direction:column;gap:10px;}
@@ -287,9 +292,41 @@
     <button id="explorerTabBtn" class="active" type="button" role="tab" aria-selected="true">Utforsker</button>
     <button id="levelsTabBtn" type="button" role="tab" aria-selected="false">Nivåstige</button>
     <button id="sessionTabBtn" type="button" role="tab" aria-selected="false">Øvingsøkt</button>
+    <button id="improvTabBtn" type="button" role="tab" aria-selected="false">Improvisasjon</button>
   </div>
 
   <div id="explorerView">
+
+    <div class="session-banner" id="improvBanner" style="display:none;">
+      <div class="session-setup" id="improvSetup">
+        <label for="improvKeySelect">Toneart</label>
+        <select id="improvKeySelect">
+          <option value="C">C</option>
+          <option value="F">F</option>
+          <option value="Bb">Bb</option>
+          <option value="Eb">Eb</option>
+          <option value="G">G</option>
+          <option value="D">D</option>
+        </select>
+        <label for="improvLoopSelect">Komp</label>
+        <select id="improvLoopSelect">
+          <option value="drone">Bordun</option>
+          <option value="progression">I-IV-V</option>
+        </select>
+        <button id="improvStartBtn" class="btn-start" type="button">▶ Start komp</button>
+      </div>
+      <div class="session-active" id="improvActive" style="display:none;">
+        <div class="session-top">
+          <div>
+            <div class="session-phase-label" id="improvLabel">–</div>
+            <div class="session-phase-sub">Trygge toner vises som dur-pentaton under.</div>
+          </div>
+          <button id="improvStopBtn" class="btn-stop" type="button">■ Stopp komp</button>
+        </div>
+        <button id="improvIdeaBtn" class="btn-stop" type="button" style="margin-top:12px;">🎲 Gi meg noe å prøve</button>
+        <div class="improv-idea" id="improvIdea" style="display:none;"></div>
+      </div>
+    </div>
 
     <div class="session-banner" id="sessionBanner" style="display:none;">
       <div class="session-setup" id="sessionSetup">
@@ -365,6 +402,9 @@
     </footer>
     <footer id="sessionFooter" style="display:none;">
       <b>10-minutters økt:</b> Lange toner (2 min) → dagens skala i varierte rytmer (3 min) → treklang (2 min) → improvisasjon over komp (3 min). Siste del er den viktigste, og kan ikke hoppes over. Alt spilles i skrevet tone.
+    </footer>
+    <footer id="improvFooter" style="display:none;">
+      <b>Improvisasjon:</b> Velg toneart og komp (bordun eller I-IV-V), trykk «Start komp», og improviser over dur-pentaton-tonene som vises — de er «trygge» og passer alltid. Trykk «Gi meg noe å prøve» for en enkel idé å teste.
     </footer>
 
   </div>
@@ -485,6 +525,19 @@
   var sessionPauseBtn = document.getElementById("sessionPauseBtn");
   var sessionSkipBtn = document.getElementById("sessionSkipBtn");
   var sessionStopBtn = document.getElementById("sessionStopBtn");
+
+  var improvTabBtn = document.getElementById("improvTabBtn");
+  var improvFooter = document.getElementById("improvFooter");
+  var improvBanner = document.getElementById("improvBanner");
+  var improvSetup = document.getElementById("improvSetup");
+  var improvActive = document.getElementById("improvActive");
+  var improvKeySelect = document.getElementById("improvKeySelect");
+  var improvLoopSelect = document.getElementById("improvLoopSelect");
+  var improvStartBtn = document.getElementById("improvStartBtn");
+  var improvStopBtn = document.getElementById("improvStopBtn");
+  var improvLabel = document.getElementById("improvLabel");
+  var improvIdeaBtn = document.getElementById("improvIdeaBtn");
+  var improvIdea = document.getElementById("improvIdea");
 
   var scaleTypeSelect = document.getElementById("scaleTypeSelect");
   var rootSelect = document.getElementById("rootSelect");
@@ -892,26 +945,34 @@
   // ---------- FANER ----------
   function switchTab(name) {
     if (name !== "session" && sessionState.active) stopSession();
-    var showExplorerCard = name === "explorer" || name === "session";
+    if (name !== "improv" && improvState.active) stopImprov();
+    var showExplorerCard = name === "explorer" || name === "session" || name === "improv";
     var isSession = name === "session";
+    var isImprov = name === "improv";
+    var isPlain = name === "explorer";
     explorerView.style.display = showExplorerCard ? "" : "none";
     levelsView.style.display = name === "levels" ? "" : "none";
-    explorerTabBtn.classList.toggle("active", name === "explorer");
+    explorerTabBtn.classList.toggle("active", isPlain);
     levelsTabBtn.classList.toggle("active", name === "levels");
     sessionTabBtn.classList.toggle("active", isSession);
-    explorerTabBtn.setAttribute("aria-selected", name === "explorer" ? "true" : "false");
+    improvTabBtn.classList.toggle("active", isImprov);
+    explorerTabBtn.setAttribute("aria-selected", isPlain ? "true" : "false");
     levelsTabBtn.setAttribute("aria-selected", name === "levels" ? "true" : "false");
     sessionTabBtn.setAttribute("aria-selected", isSession ? "true" : "false");
+    improvTabBtn.setAttribute("aria-selected", isImprov ? "true" : "false");
     sessionBanner.style.display = isSession ? "" : "none";
-    scaleControls.style.display = isSession ? "none" : (state.melodyRoot ? "none" : "");
-    melodyControls.style.display = isSession ? "none" : (state.melodyRoot ? "" : "none");
-    explorerFooter.style.display = isSession ? "none" : "";
+    improvBanner.style.display = isImprov ? "" : "none";
+    scaleControls.style.display = isPlain ? (state.melodyRoot ? "none" : "") : "none";
+    melodyControls.style.display = isPlain && state.melodyRoot ? "" : "none";
+    explorerFooter.style.display = isPlain ? "" : "none";
     sessionFooter.style.display = isSession ? "" : "none";
+    improvFooter.style.display = isImprov ? "" : "none";
     if (name === "levels") renderLevels();
   }
   explorerTabBtn.addEventListener("click", function () { switchTab("explorer"); });
   levelsTabBtn.addEventListener("click", function () { switchTab("levels"); });
   sessionTabBtn.addEventListener("click", function () { switchTab("session"); });
+  improvTabBtn.addEventListener("click", function () { switchTab("improv"); });
 
   function updateControlsVisibility() {
     scaleControls.style.display = state.melodyRoot ? "none" : "";
@@ -1096,9 +1157,9 @@
       var pent = MT.generateScaleWithOctaves(key, "majorPentatonic", 4);
       setDisplayNotes(pent, soundingScaleFor(pent, key, "majorPentatonic"), "Trygge toner i " + key, subheading);
       startRhythmPromptRotation(null);
-      startDrone(key);
+      startDrone(sessionState, key);
     }
-    if (phase.kind !== "improv") stopDrone();
+    if (phase.kind !== "improv") stopDrone(sessionState);
   }
 
   function startRhythmPromptRotation(prompts) {
@@ -1114,11 +1175,11 @@
     }, 25000);
   }
 
-  // Enkel bordun (grunntone + kvint) under improvisasjonsdelen — den
-  // fyldigere I-IV-V-kompet med "trygge toner" hører til improvisasjonsmodus
-  // (senere fase); dette er nok til at del 4 har noe å spille over.
-  function startDrone(key) {
-    stopDrone();
+  // Enkel bordun (grunntone + kvint). Brukt av både øvingsøkta (del 4) og
+  // improvisasjonsmodus — targetState er sessionState eller improvState, så
+  // de to fanene har hver sin uavhengige lyd-tilstand.
+  function startDrone(targetState, key) {
+    stopDrone(targetState);
     var ctx = getAudioCtx();
     var rootMidi = MT.generateScaleWithOctaves(key, "major", 3)[0].midi - 2; // klingende, oktav ned for et rolig bunnleie
     var gain = ctx.createGain();
@@ -1135,21 +1196,21 @@
     osc2.connect(gain);
     osc1.start();
     osc2.start();
-    sessionState.droneOsc1 = osc1;
-    sessionState.droneOsc2 = osc2;
-    sessionState.droneGain = gain;
+    targetState.droneOsc1 = osc1;
+    targetState.droneOsc2 = osc2;
+    targetState.droneGain = gain;
   }
-  function stopDrone() {
-    if (!sessionState.droneGain) return;
+  function stopDrone(targetState) {
+    if (!targetState.droneGain) return;
     var ctx = getAudioCtx();
-    var g = sessionState.droneGain, o1 = sessionState.droneOsc1, o2 = sessionState.droneOsc2;
+    var g = targetState.droneGain, o1 = targetState.droneOsc1, o2 = targetState.droneOsc2;
     g.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.4);
     setTimeout(function () {
       o1.stop(); o2.stop();
     }, 500);
-    sessionState.droneOsc1 = null;
-    sessionState.droneOsc2 = null;
-    sessionState.droneGain = null;
+    targetState.droneOsc1 = null;
+    targetState.droneOsc2 = null;
+    targetState.droneGain = null;
   }
 
   function updateSessionUI() {
@@ -1196,7 +1257,7 @@
   }
 
   function finishSession() {
-    stopDrone();
+    stopDrone(sessionState);
     if (sessionState.rhythmTimerId) clearInterval(sessionState.rhythmTimerId);
     if (sessionState.timerId) clearInterval(sessionState.timerId);
     sessionState.timerId = null;
@@ -1216,7 +1277,7 @@
   }
 
   function stopSession() {
-    stopDrone();
+    stopDrone(sessionState);
     if (sessionState.rhythmTimerId) clearInterval(sessionState.rhythmTimerId);
     if (sessionState.timerId) clearInterval(sessionState.timerId);
     sessionState.timerId = null;
@@ -1229,8 +1290,8 @@
   sessionStartBtn.addEventListener("click", startSession);
   sessionPauseBtn.addEventListener("click", function () {
     sessionState.paused = !sessionState.paused;
-    if (sessionState.paused) stopDrone();
-    else if (SESSION_PHASES[sessionState.phaseIndex].kind === "improv") startDrone(sessionState.key);
+    if (sessionState.paused) stopDrone(sessionState);
+    else if (SESSION_PHASES[sessionState.phaseIndex].kind === "improv") startDrone(sessionState, sessionState.key);
     updateSessionUI();
   });
   sessionSkipBtn.addEventListener("click", function () {
@@ -1239,6 +1300,121 @@
     else finishSession();
   });
   sessionStopBtn.addEventListener("click", stopSession);
+
+  // ---------- IMPROVISASJONSMODUS ----------
+  var IMPROV_IDEAS = [
+    "Bruk bare tre toner",
+    "Start på en lang tone",
+    "Hermer rytmen fra forrige takt",
+    "Spill bare stigende (opp)",
+    "Spill bare synkende (ned)",
+    "Bruk kun de to øverste tonene",
+    "Lag en kort frase og gjenta den to ganger",
+    "Avslutt alltid på grunntonen",
+    "Spill noe stille, så noe høyt",
+    "Ta en pause midt i frasen"
+  ];
+  var IMPROV_CHORD_SECONDS = 3;
+  // I-IV-V-I: skaladegree-indekser 0=I, 3=IV, 4=V, tilbake til 0=I
+  var IMPROV_PROGRESSION_DEGREES = [0, 3, 4, 0];
+
+  var improvState = {
+    active: false, key: "C", loopType: "drone",
+    droneOsc1: null, droneOsc2: null, droneGain: null,
+    chordTimerId: null, chordIndex: 0, chordOscs: [], chordGain: null,
+    lastIdeaIndex: -1
+  };
+
+  function playChord(midiNotes, durationSec) {
+    var ctx = getAudioCtx();
+    stopChord();
+    var gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 0.15);
+    gain.gain.setValueAtTime(0.06, ctx.currentTime + durationSec - 0.15);
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + durationSec);
+    gain.connect(ctx.destination);
+    var oscs = midiNotes.map(function (midi) {
+      var osc = ctx.createOscillator();
+      osc.type = "sine";
+      osc.frequency.value = midiToFreq(midi);
+      osc.connect(gain);
+      osc.start();
+      osc.stop(ctx.currentTime + durationSec + 0.05);
+      return osc;
+    });
+    improvState.chordOscs = oscs;
+    improvState.chordGain = gain;
+  }
+  function stopChord() {
+    improvState.chordOscs.forEach(function (o) {
+      try { o.stop(); } catch (e) { /* allerede stoppet */ }
+    });
+    improvState.chordOscs = [];
+    improvState.chordGain = null;
+  }
+  function triadMidiForDegree(majorScaleNotes, degreeIndex, octaveDown) {
+    var root = majorScaleNotes[degreeIndex];
+    return MT.generateScaleWithOctaves(root.name, "majorTriad", root.octave - (octaveDown || 0))
+      .map(function (n) { return n.midi - 2; }); // klingende
+  }
+  function startProgressionLoop(key) {
+    stopChord();
+    if (improvState.chordTimerId) clearInterval(improvState.chordTimerId);
+    var majorScaleNotes = MT.generateScaleWithOctaves(key, "major", 3);
+    improvState.chordIndex = 0;
+    function playNextChord() {
+      var degree = IMPROV_PROGRESSION_DEGREES[improvState.chordIndex % IMPROV_PROGRESSION_DEGREES.length];
+      playChord(triadMidiForDegree(majorScaleNotes, degree), IMPROV_CHORD_SECONDS);
+      improvState.chordIndex++;
+    }
+    playNextChord();
+    improvState.chordTimerId = setInterval(playNextChord, IMPROV_CHORD_SECONDS * 1000);
+  }
+  function stopProgressionLoop() {
+    if (improvState.chordTimerId) clearInterval(improvState.chordTimerId);
+    improvState.chordTimerId = null;
+    stopChord();
+  }
+
+  function renderImprovSafeTones() {
+    var scale = MT.generateScaleWithOctaves(improvState.key, "majorPentatonic", 4);
+    var sounding = soundingScaleFor(scale, improvState.key, "majorPentatonic");
+    var subheading = state.display === "written" ? "skrevet for Bb-kornett" : "klingende";
+    setDisplayNotes(scale, sounding, "Trygge toner i " + improvState.key, subheading);
+  }
+
+  function startImprov() {
+    improvState.key = improvKeySelect.value;
+    improvState.loopType = improvLoopSelect.value;
+    improvState.active = true;
+    improvSetup.style.display = "none";
+    improvActive.style.display = "";
+    improvLabel.textContent = improvState.key + "-dur — " + (improvState.loopType === "drone" ? "bordun" : "I-IV-V-komp");
+    improvIdea.style.display = "none";
+    renderImprovSafeTones();
+    if (improvState.loopType === "drone") startDrone(improvState, improvState.key);
+    else startProgressionLoop(improvState.key);
+  }
+  function stopImprov() {
+    stopDrone(improvState);
+    stopProgressionLoop();
+    improvState.active = false;
+    improvActive.style.display = "none";
+    improvSetup.style.display = "";
+  }
+
+  improvStartBtn.addEventListener("click", startImprov);
+  improvStopBtn.addEventListener("click", stopImprov);
+  improvIdeaBtn.addEventListener("click", function () {
+    var i;
+    do {
+      i = Math.floor(Math.random() * IMPROV_IDEAS.length);
+    } while (i === improvState.lastIdeaIndex && IMPROV_IDEAS.length > 1);
+    improvState.lastIdeaIndex = i;
+    improvIdea.textContent = "💡 " + IMPROV_IDEAS[i];
+    improvIdea.style.display = "";
+  });
 
   // ---------- START ----------
   updateRootOptions();
