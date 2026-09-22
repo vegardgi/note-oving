@@ -211,6 +211,28 @@
   }
   .tabs button.active{background:linear-gradient(180deg,var(--brass-light),var(--brass) 70%);color:#2c2013;border-color:transparent;}
 
+  /* ---------- ØVINGSØKT ---------- */
+  .session-banner{
+    background:var(--ink-2);border:1px solid #263140;border-radius:14px;
+    padding:14px 16px;margin-bottom:16px;
+  }
+  .session-setup{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .session-setup label{font-size:12.5px;color:var(--muted);}
+  .session-top{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap;}
+  .session-phase-label{font-family:'Fraunces',serif;font-weight:600;font-size:17px;color:var(--paper);}
+  .session-phase-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+  .session-countdown{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:26px;color:var(--brass-light);}
+  .session-progress-track{height:8px;border-radius:4px;background:var(--ink-3);overflow:hidden;margin-top:12px;}
+  .session-progress-fill{height:100%;width:0%;background:linear-gradient(90deg,var(--brass-dark),var(--brass-light));transition:width .3s ease;}
+  .session-improv-reminder{
+    margin-top:10px;font-size:13px;font-weight:600;color:#2c2013;
+    background:linear-gradient(180deg,var(--brass-light),var(--brass) 70%);
+    border-radius:8px;padding:8px 12px;
+  }
+  .session-controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+  .session-controls button{font-size:12.5px;padding:8px 14px;}
+  .session-controls button:disabled{opacity:.35;cursor:not-allowed;}
+
   /* ---------- NIVÅSTIGE ---------- */
   .level-list{display:flex;flex-direction:column;gap:10px;}
   .level-card{
@@ -264,9 +286,39 @@
   <div class="tabs" role="tablist" aria-label="Velg visning">
     <button id="explorerTabBtn" class="active" type="button" role="tab" aria-selected="true">Utforsker</button>
     <button id="levelsTabBtn" type="button" role="tab" aria-selected="false">Nivåstige</button>
+    <button id="sessionTabBtn" type="button" role="tab" aria-selected="false">Øvingsøkt</button>
   </div>
 
   <div id="explorerView">
+
+    <div class="session-banner" id="sessionBanner" style="display:none;">
+      <div class="session-setup" id="sessionSetup">
+        <label for="sessionKeySelect">Dagens toneart</label>
+        <select id="sessionKeySelect">
+          <option value="C">C</option>
+          <option value="F">F</option>
+          <option value="G">G</option>
+          <option value="Bb">Bb</option>
+        </select>
+        <button id="sessionStartBtn" class="btn-start" type="button">▶ Start 10-minutters økt</button>
+      </div>
+      <div class="session-active" id="sessionActive" style="display:none;">
+        <div class="session-top">
+          <div>
+            <div class="session-phase-label" id="sessionPhaseLabel">–</div>
+            <div class="session-phase-sub" id="sessionPhaseNum">Del 1 av 4</div>
+          </div>
+          <div class="session-countdown" id="sessionCountdown">0:00</div>
+        </div>
+        <div class="session-progress-track"><div class="session-progress-fill" id="sessionProgressFill"></div></div>
+        <div class="session-improv-reminder" id="sessionImprovReminder" style="display:none;">🎺 Den viktigste delen — ikke hopp over den!</div>
+        <div class="session-controls">
+          <button id="sessionPauseBtn" class="btn-stop" type="button">⏸ Pause</button>
+          <button id="sessionSkipBtn" class="btn-stop" type="button">Hopp til neste del →</button>
+          <button id="sessionStopBtn" class="btn-stop" type="button">■ Avslutt økt</button>
+        </div>
+      </div>
+    </div>
 
     <div class="controls" style="margin-bottom:16px;" id="scaleControls">
       <select id="scaleTypeSelect" aria-label="Skalatype">
@@ -308,8 +360,11 @@
       </div>
     </div>
 
-    <footer>
+    <footer id="explorerFooter">
       <b>Slik virker det:</b> Notene vises som standard i SKREVET tone for Bb-kornett. Ventildiagrammet under hver note viser hvilke ventiler som trykkes (fylt sirkel = trykket, 0 = løs). Noen toner har en alternativ fingersetting — den vises i parentes. «Klingende» bytter bare visningen av tonenavn og toneart, ikke fingersetting — fingersetting er alltid mot den skrevne tonen. Klikk en note (eller «Spill opp og ned») for å høre den. Fungerer best i Chrome, med lydtilgang tillatt av nettleseren ved første klikk.
+    </footer>
+    <footer id="sessionFooter" style="display:none;">
+      <b>10-minutters økt:</b> Lange toner (2 min) → dagens skala i varierte rytmer (3 min) → treklang (2 min) → improvisasjon over komp (3 min). Siste del er den viktigste, og kan ikke hoppes over. Alt spilles i skrevet tone.
     </footer>
 
   </div>
@@ -404,6 +459,7 @@
 
   var explorerTabBtn = document.getElementById("explorerTabBtn");
   var levelsTabBtn = document.getElementById("levelsTabBtn");
+  var sessionTabBtn = document.getElementById("sessionTabBtn");
   var explorerView = document.getElementById("explorerView");
   var levelsView = document.getElementById("levelsView");
   var levelList = document.getElementById("levelList");
@@ -413,6 +469,22 @@
   var melodyKeySelect = document.getElementById("melodyKeySelect");
   var playMelodyBtn = document.getElementById("playMelodyBtn");
   var exitMelodyBtn = document.getElementById("exitMelodyBtn");
+
+  var explorerFooter = document.getElementById("explorerFooter");
+  var sessionFooter = document.getElementById("sessionFooter");
+  var sessionBanner = document.getElementById("sessionBanner");
+  var sessionSetup = document.getElementById("sessionSetup");
+  var sessionActiveEl = document.getElementById("sessionActive");
+  var sessionKeySelect = document.getElementById("sessionKeySelect");
+  var sessionStartBtn = document.getElementById("sessionStartBtn");
+  var sessionPhaseLabel = document.getElementById("sessionPhaseLabel");
+  var sessionPhaseNum = document.getElementById("sessionPhaseNum");
+  var sessionCountdown = document.getElementById("sessionCountdown");
+  var sessionProgressFill = document.getElementById("sessionProgressFill");
+  var sessionImprovReminder = document.getElementById("sessionImprovReminder");
+  var sessionPauseBtn = document.getElementById("sessionPauseBtn");
+  var sessionSkipBtn = document.getElementById("sessionSkipBtn");
+  var sessionStopBtn = document.getElementById("sessionStopBtn");
 
   var scaleTypeSelect = document.getElementById("scaleTypeSelect");
   var rootSelect = document.getElementById("rootSelect");
@@ -819,17 +891,27 @@
 
   // ---------- FANER ----------
   function switchTab(name) {
-    var explorer = name === "explorer";
-    explorerView.style.display = explorer ? "" : "none";
-    levelsView.style.display = explorer ? "none" : "";
-    explorerTabBtn.classList.toggle("active", explorer);
-    levelsTabBtn.classList.toggle("active", !explorer);
-    explorerTabBtn.setAttribute("aria-selected", explorer ? "true" : "false");
-    levelsTabBtn.setAttribute("aria-selected", !explorer ? "true" : "false");
-    if (!explorer) renderLevels();
+    if (name !== "session" && sessionState.active) stopSession();
+    var showExplorerCard = name === "explorer" || name === "session";
+    var isSession = name === "session";
+    explorerView.style.display = showExplorerCard ? "" : "none";
+    levelsView.style.display = name === "levels" ? "" : "none";
+    explorerTabBtn.classList.toggle("active", name === "explorer");
+    levelsTabBtn.classList.toggle("active", name === "levels");
+    sessionTabBtn.classList.toggle("active", isSession);
+    explorerTabBtn.setAttribute("aria-selected", name === "explorer" ? "true" : "false");
+    levelsTabBtn.setAttribute("aria-selected", name === "levels" ? "true" : "false");
+    sessionTabBtn.setAttribute("aria-selected", isSession ? "true" : "false");
+    sessionBanner.style.display = isSession ? "" : "none";
+    scaleControls.style.display = isSession ? "none" : (state.melodyRoot ? "none" : "");
+    melodyControls.style.display = isSession ? "none" : (state.melodyRoot ? "" : "none");
+    explorerFooter.style.display = isSession ? "none" : "";
+    sessionFooter.style.display = isSession ? "" : "none";
+    if (name === "levels") renderLevels();
   }
   explorerTabBtn.addEventListener("click", function () { switchTab("explorer"); });
   levelsTabBtn.addEventListener("click", function () { switchTab("levels"); });
+  sessionTabBtn.addEventListener("click", function () { switchTab("session"); });
 
   function updateControlsVisibility() {
     scaleControls.style.display = state.melodyRoot ? "none" : "";
@@ -939,6 +1021,224 @@
       levelList.appendChild(card);
     });
   }
+
+  // ---------- ØVINGSØKT (10 min, 4 deler) ----------
+  // Siste del (improvisasjon) er den viktigste og skal aldri kuttes eller
+  // nedprioriteres, jf. oppgaven — "Hopp til neste del" er derfor deaktivert
+  // mens den delen spilles, og "protected" er det eneste stedet dette håndheves.
+  var SESSION_PHASES = [
+    { id: "longTones", label: "Lange toner", seconds: 120, kind: "note" },
+    { id: "scale", label: "Dagens skala i varierte rytmer", seconds: 180, kind: "scale" },
+    { id: "triad", label: "Treklang", seconds: 120, kind: "triad" },
+    { id: "improv", label: "Improvisasjon over komp", seconds: 180, kind: "improv", protected: true }
+  ];
+  var SESSION_TOTAL_SECONDS = SESSION_PHASES.reduce(function (sum, p) { return sum + p.seconds; }, 0);
+  var RHYTHM_PROMPTS = [
+    "Jevne fjerdedeler", "Åttedeler", "Prikket rytme (lang-kort)",
+    "Triolar (tre jevne per slag)", "Hopp annenhver tone (opp-ned-opp-ned)"
+  ];
+
+  var sessionState = {
+    active: false, paused: false, phaseIndex: 0, remaining: 0,
+    key: "C", timerId: null, rhythmTimerId: null,
+    droneOsc1: null, droneOsc2: null, droneGain: null
+  };
+
+  // Samme mønster som i rebuildScale()/melodyNotesFor(), men skrevet ut for seg
+  // siden økten setter innholdet direkte i stedet for via scaleType/root-selects.
+  function soundingScaleFor(writtenNotes, root, scaleType) {
+    var soundingRoot = MT.soundingKeyFor(root);
+    if (!soundingRoot) return null;
+    var soundingStartOctave = Math.floor((writtenNotes[0].midi - 2) / 12) - 1;
+    return MT.generateScaleWithOctaves(soundingRoot, scaleType, soundingStartOctave);
+  }
+
+  function setDisplayNotes(notes, soundingNotes, headingText, subheadingText) {
+    state.scale = notes;
+    state.soundingScale = soundingNotes;
+    keyHeading.textContent = headingText;
+    keySubheading.textContent = subheadingText;
+    drawScaleOnStaff();
+    renderNoteRow();
+    wireStaffClicks();
+  }
+
+  function formatMMSS(totalSeconds) {
+    var m = Math.floor(totalSeconds / 60);
+    var s = totalSeconds % 60;
+    return m + ":" + (s < 10 ? "0" : "") + s;
+  }
+
+  function elapsedSecondsBeforePhase(index) {
+    var sum = 0;
+    for (var i = 0; i < index; i++) sum += SESSION_PHASES[i].seconds;
+    return sum;
+  }
+
+  function renderSessionPhaseContent(phase) {
+    var key = sessionState.key;
+    var subheading = state.display === "written" ? "skrevet for Bb-kornett" : "klingende";
+    if (phase.kind === "note") {
+      var full = MT.generateScaleWithOctaves(key, "major", 4);
+      var note = [full[0]];
+      var sounding = soundingScaleFor(full, key, "major");
+      setDisplayNotes(note, sounding ? [sounding[0]] : null, "Lang tone i " + key, subheading);
+      startRhythmPromptRotation(null); // ingen rytmeforslag i denne delen
+    } else if (phase.kind === "scale") {
+      var scale = MT.generateScaleWithOctaves(key, "major", 4);
+      setDisplayNotes(scale, soundingScaleFor(scale, key, "major"), key + "-dur", subheading);
+      startRhythmPromptRotation(RHYTHM_PROMPTS);
+    } else if (phase.kind === "triad") {
+      var triad = MT.generateScaleWithOctaves(key, "majorTriad", 4);
+      setDisplayNotes(triad, soundingScaleFor(triad, key, "majorTriad"), key + "-durtreklang", subheading);
+      startRhythmPromptRotation(null);
+    } else if (phase.kind === "improv") {
+      var pent = MT.generateScaleWithOctaves(key, "majorPentatonic", 4);
+      setDisplayNotes(pent, soundingScaleFor(pent, key, "majorPentatonic"), "Trygge toner i " + key, subheading);
+      startRhythmPromptRotation(null);
+      startDrone(key);
+    }
+    if (phase.kind !== "improv") stopDrone();
+  }
+
+  function startRhythmPromptRotation(prompts) {
+    if (sessionState.rhythmTimerId) clearInterval(sessionState.rhythmTimerId);
+    sessionState.rhythmTimerId = null;
+    if (!prompts) return;
+    var i = 0;
+    keySubheading.textContent += " · " + prompts[i];
+    sessionState.rhythmTimerId = setInterval(function () {
+      i = (i + 1) % prompts.length;
+      var base = state.display === "written" ? "skrevet for Bb-kornett" : "klingende";
+      keySubheading.textContent = base + " · " + prompts[i];
+    }, 25000);
+  }
+
+  // Enkel bordun (grunntone + kvint) under improvisasjonsdelen — den
+  // fyldigere I-IV-V-kompet med "trygge toner" hører til improvisasjonsmodus
+  // (senere fase); dette er nok til at del 4 har noe å spille over.
+  function startDrone(key) {
+    stopDrone();
+    var ctx = getAudioCtx();
+    var rootMidi = MT.generateScaleWithOctaves(key, "major", 3)[0].midi - 2; // klingende, oktav ned for et rolig bunnleie
+    var gain = ctx.createGain();
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.07, ctx.currentTime + 1.2);
+    gain.connect(ctx.destination);
+    var osc1 = ctx.createOscillator();
+    osc1.type = "sine";
+    osc1.frequency.value = midiToFreq(rootMidi);
+    var osc2 = ctx.createOscillator();
+    osc2.type = "sine";
+    osc2.frequency.value = midiToFreq(rootMidi + 7); // ren kvint
+    osc1.connect(gain);
+    osc2.connect(gain);
+    osc1.start();
+    osc2.start();
+    sessionState.droneOsc1 = osc1;
+    sessionState.droneOsc2 = osc2;
+    sessionState.droneGain = gain;
+  }
+  function stopDrone() {
+    if (!sessionState.droneGain) return;
+    var ctx = getAudioCtx();
+    var g = sessionState.droneGain, o1 = sessionState.droneOsc1, o2 = sessionState.droneOsc2;
+    g.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.4);
+    setTimeout(function () {
+      o1.stop(); o2.stop();
+    }, 500);
+    sessionState.droneOsc1 = null;
+    sessionState.droneOsc2 = null;
+    sessionState.droneGain = null;
+  }
+
+  function updateSessionUI() {
+    var phase = SESSION_PHASES[sessionState.phaseIndex];
+    sessionPhaseLabel.textContent = phase.label;
+    sessionPhaseNum.textContent = "Del " + (sessionState.phaseIndex + 1) + " av " + SESSION_PHASES.length;
+    sessionCountdown.textContent = formatMMSS(sessionState.remaining);
+    var elapsed = elapsedSecondsBeforePhase(sessionState.phaseIndex) + (phase.seconds - sessionState.remaining);
+    sessionProgressFill.style.width = Math.min(100, (elapsed / SESSION_TOTAL_SECONDS) * 100) + "%";
+    sessionImprovReminder.style.display = phase.protected ? "" : "none";
+    sessionSkipBtn.disabled = !!phase.protected;
+    sessionPauseBtn.textContent = sessionState.paused ? "▶ Fortsett" : "⏸ Pause";
+  }
+
+  function enterPhase(index) {
+    sessionState.phaseIndex = index;
+    sessionState.remaining = SESSION_PHASES[index].seconds;
+    renderSessionPhaseContent(SESSION_PHASES[index]);
+    updateSessionUI();
+  }
+
+  function sessionTick() {
+    if (sessionState.paused) return;
+    sessionState.remaining--;
+    if (sessionState.remaining <= 0) {
+      if (sessionState.phaseIndex + 1 < SESSION_PHASES.length) {
+        enterPhase(sessionState.phaseIndex + 1);
+      } else {
+        finishSession();
+      }
+      return;
+    }
+    updateSessionUI();
+  }
+
+  function startSession() {
+    sessionState.key = sessionKeySelect.value;
+    sessionState.active = true;
+    sessionState.paused = false;
+    sessionSetup.style.display = "none";
+    sessionActiveEl.style.display = "";
+    enterPhase(0);
+    sessionState.timerId = setInterval(sessionTick, 1000);
+  }
+
+  function finishSession() {
+    stopDrone();
+    if (sessionState.rhythmTimerId) clearInterval(sessionState.rhythmTimerId);
+    if (sessionState.timerId) clearInterval(sessionState.timerId);
+    sessionState.timerId = null;
+    sessionState.active = false;
+    sessionPhaseLabel.textContent = "Økt fullført! 🎉";
+    sessionPhaseNum.textContent = "Alle 4 deler er unnagjort.";
+    sessionCountdown.textContent = "0:00";
+    sessionProgressFill.style.width = "100%";
+    sessionImprovReminder.style.display = "none";
+    sessionSkipBtn.disabled = true;
+    sessionPauseBtn.disabled = true;
+    setTimeout(function () {
+      sessionPauseBtn.disabled = false;
+      sessionActiveEl.style.display = "none";
+      sessionSetup.style.display = "";
+    }, 4000);
+  }
+
+  function stopSession() {
+    stopDrone();
+    if (sessionState.rhythmTimerId) clearInterval(sessionState.rhythmTimerId);
+    if (sessionState.timerId) clearInterval(sessionState.timerId);
+    sessionState.timerId = null;
+    sessionState.active = false;
+    sessionState.paused = false;
+    sessionActiveEl.style.display = "none";
+    sessionSetup.style.display = "";
+  }
+
+  sessionStartBtn.addEventListener("click", startSession);
+  sessionPauseBtn.addEventListener("click", function () {
+    sessionState.paused = !sessionState.paused;
+    if (sessionState.paused) stopDrone();
+    else if (SESSION_PHASES[sessionState.phaseIndex].kind === "improv") startDrone(sessionState.key);
+    updateSessionUI();
+  });
+  sessionSkipBtn.addEventListener("click", function () {
+    if (SESSION_PHASES[sessionState.phaseIndex].protected) return;
+    if (sessionState.phaseIndex + 1 < SESSION_PHASES.length) enterPhase(sessionState.phaseIndex + 1);
+    else finishSession();
+  });
+  sessionStopBtn.addEventListener("click", stopSession);
 
   // ---------- START ----------
   updateRootOptions();
