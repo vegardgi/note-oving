@@ -56,6 +56,9 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
+// Skalatrener-siden laster musikkteori-modulen direkte i nettleseren
+// (samme fil som node --test kjører mot, ingen bundling).
+app.use("/lib", express.static(path.join(__dirname, "lib")));
 
 function signToken(user) {
   return jwt.sign({ uid: user.id, username: user.username }, JWT_SECRET, {

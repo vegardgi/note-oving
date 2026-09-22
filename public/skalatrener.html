@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skalatrener</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  /* Samme palett/tema som index.html, for visuell konsistens mellom sidene. */
+  :root{
+    --ink:#0f141b;
+    --ink-2:#1a222c;
+    --ink-3:#232d39;
+    --brass:#c99a44;
+    --brass-light:#eccd8a;
+    --brass-dark:#8a6a2c;
+    --paper:#f1e8d6;
+    --paper-2:#e8dcc2;
+    --ink-text:#2c2013;
+    --muted:#8a94a3;
+    --muted-2:#5b6472;
+    --green:#2ecc71;
+    --green-glow:rgba(46,204,113,.85);
+    --radius:18px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse 900px 500px at 50% -10%, #24303d 0%, transparent 60%),
+      linear-gradient(180deg,var(--ink) 0%, #0b0f14 100%);
+    color:var(--paper);
+    font-family:'Inter',system-ui,sans-serif;
+    display:flex;
+    justify-content:center;
+    padding:28px 16px 60px;
+  }
+  .wrap{width:100%;max-width:880px;}
+
+  header{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:14px;
+    margin-bottom:22px;
+    flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-mark{
+    width:40px;height:40px;border-radius:50%;
+    background:radial-gradient(circle at 32% 28%, var(--brass-light), var(--brass) 55%, var(--brass-dark) 100%);
+    box-shadow:0 2px 10px rgba(0,0,0,.4), inset 0 -2px 4px rgba(0,0,0,.25);
+    flex-shrink:0;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:26px;
+    margin:0;
+    letter-spacing:.2px;
+  }
+  h1 span{color:var(--brass-light);font-style:italic;font-weight:400;}
+  .sub{font-size:12.5px;color:var(--muted);margin-top:2px;}
+  .back-link{
+    font-size:12.5px;color:var(--muted);text-decoration:none;
+    border:1px solid #3a4753;border-radius:10px;padding:8px 12px;
+    transition:color .12s ease, border-color .12s ease;
+  }
+  .back-link:hover{color:var(--paper);border-color:var(--brass);}
+
+  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  select{
+    background:var(--ink-3);
+    color:var(--paper);
+    border:1px solid #33404e;
+    border-radius:10px;
+    padding:9px 10px;
+    font-family:'Inter',sans-serif;
+    font-size:13px;
+  }
+  button{
+    font-family:'Inter',sans-serif;
+    font-weight:600;
+    font-size:13.5px;
+    border:none;
+    border-radius:10px;
+    padding:10px 16px;
+    cursor:pointer;
+    transition:transform .12s ease, box-shadow .12s ease, opacity .12s ease;
+  }
+  button:active{transform:scale(.96);}
+  button:disabled{opacity:.4;cursor:not-allowed;}
+  .btn-start{
+    background:linear-gradient(180deg,var(--brass-light),var(--brass) 70%);
+    color:#2c2013;
+    box-shadow:0 3px 12px rgba(201,154,68,.35);
+  }
+  .btn-stop{
+    background:var(--ink-3);
+    color:var(--paper);
+    border:1px solid #3a4753;
+  }
+  .btn-stop.active{
+    background:linear-gradient(180deg,var(--brass-light),var(--brass) 70%);
+    color:#2c2013;
+  }
+
+  /* ---------- STAND / KORT (samme oppskrift som index.html) ---------- */
+  .card{
+    position:relative;
+    background:linear-gradient(180deg,var(--paper),var(--paper-2));
+    border-radius:var(--radius);
+    padding:30px 18px 22px;
+    box-shadow:
+      0 18px 40px rgba(0,0,0,.45),
+      0 0 0 1px rgba(0,0,0,.06);
+  }
+  .clip{
+    position:absolute;
+    top:-11px;left:50%;transform:translateX(-50%);
+    width:46px;height:22px;
+    background:linear-gradient(180deg,var(--brass-light),var(--brass-dark));
+    border-radius:5px;
+    box-shadow:0 3px 8px rgba(0,0,0,.4);
+  }
+  .clip::after{
+    content:"";position:absolute;left:50%;top:50%;
+    width:9px;height:9px;border-radius:50%;
+    background:#2c2013;transform:translate(-50%,-50%);
+    box-shadow:inset 0 1px 2px rgba(0,0,0,.6);
+  }
+  .key-heading{
+    text-align:center;font-family:'Fraunces',serif;font-weight:600;
+    font-size:19px;color:var(--ink-text);margin-bottom:4px;
+  }
+  .key-heading small{
+    display:block;font-family:'Inter',sans-serif;font-weight:500;
+    font-size:12px;color:#6b5d47;margin-top:2px;
+  }
+
+  svg.staff{width:100%;height:auto;display:block;touch-action:manipulation;}
+  .staff-line{stroke:var(--ink-text);stroke-width:1.6;}
+  .clef{fill:var(--ink-text);}
+  .ledger{stroke:var(--ink-text);stroke-width:1.6;}
+  .accidental{fill:var(--ink-text);font-family:'Fraunces',serif;}
+  .notehead{fill:var(--ink-text);cursor:pointer;}
+  .notehead.playing{fill:var(--brass-dark);}
+  .note-hit-area{fill:transparent;cursor:pointer;}
+
+  /* ---------- TONE-RAD (navn + ventildiagram under hver note) ---------- */
+  .note-row{
+    display:flex;
+    justify-content:space-between;
+    gap:2px;
+    margin-top:10px;
+    padding:0 8px;
+  }
+  .note-col{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    cursor:pointer;
+    border-radius:10px;
+    padding:6px 2px 8px;
+    background:transparent;
+    transition:background .12s ease;
+  }
+  .note-col:hover,.note-col:focus-visible{background:rgba(201,154,68,.16);}
+  .note-col:focus-visible{outline:2px solid var(--brass-dark);outline-offset:1px;}
+  .note-col.playing{background:rgba(201,154,68,.30);}
+  .note-col-label{
+    font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;
+    color:var(--ink-text);
+  }
+  .valves{display:flex;gap:4px;}
+  .valve{
+    width:15px;height:15px;border-radius:50%;
+    border:1.6px solid var(--ink-text);
+    background:transparent;
+  }
+  .valve.pressed{background:var(--ink-text);}
+  .valve-alt-hint{font-size:9.5px;color:#8a7a5a;font-family:'JetBrains Mono',monospace;}
+
+  .meta-row{
+    display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+    margin-top:16px;justify-content:center;
+  }
+  .tempo-row{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);}
+  .tempo-row input[type=range]{width:140px;accent-color:var(--brass);}
+  .toggle{
+    display:flex;background:var(--ink-3);border-radius:10px;border:1px solid #3a4753;overflow:hidden;
+  }
+  .toggle button{
+    background:transparent;color:var(--muted);border:none;border-radius:0;padding:8px 14px;font-size:12.5px;
+  }
+  .toggle button.active{background:linear-gradient(180deg,var(--brass-light),var(--brass) 70%);color:#2c2013;}
+
+  footer{
+    margin-top:28px;font-size:12px;color:var(--muted);line-height:1.6;
+  }
+
+  @media (max-width:560px){
+    .note-col-label{font-size:11.5px;}
+    h1{font-size:21px;}
+    .key-heading{font-size:16px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div>
+        <h1>Skala<span>trener</span></h1>
+        <div class="sub">Velg toneart og skalatype. Klikk en tone for å høre den.</div>
+      </div>
+    </div>
+    <div class="controls">
+      <a class="back-link" href="/">← Kornettøving</a>
+    </div>
+  </header>
+
+  <div class="controls" style="margin-bottom:16px;">
+    <select id="scaleTypeSelect" aria-label="Skalatype">
+      <option value="major" selected>Dur</option>
+      <option value="majorPentatonic">Dur-pentaton</option>
+      <option value="minorPentatonic">Moll-pentaton</option>
+      <option value="blues">Blues</option>
+    </select>
+    <select id="rootSelect" aria-label="Toneart"></select>
+    <button id="playScaleBtn" class="btn-start">▶ Spill opp og ned</button>
+  </div>
+
+  <div class="card">
+    <div class="clip"></div>
+    <div class="key-heading" id="keyHeading">–<small id="keySubheading"></small></div>
+    <svg class="staff" id="staffSvg" viewBox="0 0 600 190" role="img" aria-label="Notebilde av skalaen"></svg>
+    <div class="note-row" id="noteRow"></div>
+  </div>
+
+  <div class="meta-row">
+    <div class="toggle" role="group" aria-label="Skrevet eller klingende visning">
+      <button id="writtenToggleBtn" class="active" type="button">Skrevet</button>
+      <button id="soundingToggleBtn" type="button">Klingende</button>
+    </div>
+    <div class="tempo-row">
+      <label for="tempoRange">Tempo</label>
+      <input type="range" id="tempoRange" min="60" max="160" step="5" value="100">
+      <span id="tempoLabel">100 BPM</span>
+    </div>
+  </div>
+
+  <footer>
+    <b>Slik virker det:</b> Notene vises som standard i SKREVET tone for Bb-kornett. Ventildiagrammet under hver note viser hvilke ventiler som trykkes (fylt sirkel = trykket, 0 = løs). Noen toner har en alternativ fingersetting — den vises i parentes. «Klingende» bytter bare visningen av tonenavn og toneart, ikke fingersetting — fingersetting er alltid mot den skrevne tonen. Klikk en note (eller «Spill opp og ned») for å høre den. Fungerer best i Chrome, med lydtilgang tillatt av nettleseren ved første klikk.
+  </footer>
+
+</div>
+
+<script src="/lib/music-theory.js"></script>
+<script>
+(function(){
+  "use strict";
+  var MT = window.MusicTheory;
+
+  // ---------- TONEART-LISTER (kun tonearter som faktisk finnes i fasiten for hver skalatype) ----------
+  var ROOTS_BY_SCALE_TYPE = {
+    major: ["C", "F", "Bb", "Eb", "G", "D", "A", "Ab"],
+    majorPentatonic: ["C", "F", "Bb", "Eb", "G", "D"],
+    minorPentatonic: ["A", "D", "E", "G", "C", "B"],
+    blues: ["C", "G", "D", "A", "F"]
+  };
+  var SCALE_TYPE_LABELS = {
+    major: "dur",
+    majorPentatonic: "dur-pentaton",
+    minorPentatonic: "moll-pentaton",
+    blues: "blues"
+  };
+
+  var scaleTypeSelect = document.getElementById("scaleTypeSelect");
+  var rootSelect = document.getElementById("rootSelect");
+  var playScaleBtn = document.getElementById("playScaleBtn");
+  var staffSvg = document.getElementById("staffSvg");
+  var noteRow = document.getElementById("noteRow");
+  var keyHeading = document.getElementById("keyHeading");
+  var keySubheading = document.getElementById("keySubheading");
+  var writtenToggleBtn = document.getElementById("writtenToggleBtn");
+  var soundingToggleBtn = document.getElementById("soundingToggleBtn");
+  var tempoRange = document.getElementById("tempoRange");
+  var tempoLabel = document.getElementById("tempoLabel");
+
+  var state = {
+    scaleType: "major",
+    root: "C",
+    display: "written", // "written" | "sounding"
+    tempoBpm: 100,
+    scale: [] // liste av {name, octave, written, midi, fingering}
+  };
+
+  // ---------- NOTASJON (gjenbruker samme SVG-oppskrift som index.html) ----------
+  var svgNS = "http://www.w3.org/2000/svg";
+  var LINE_Y = [60, 78, 96, 114, 132]; // topp(F5) .. bunn(E4)
+  var STEP_PX = 9;
+  var BASE_Y = 132; // trinn 0 = E4
+  var TREBLE_CLEF_D = "M 253.15412,641.98044 C 240.6871,644.53718 229.13339,651.37787 218.10574,662.2748 C 207.06431,673.37176 201.15385,686.02874 200.18764,700.03186 C 199.58032,708.83382 201.89814,719.04359 206.98199,730.04721 C 212.05202,741.25086 220.33707,749.66139 231.42225,755.45119 C 235.17713,756.51425 236.84387,758.63923 236.65063,761.43985 C 236.58163,762.44008 235.10888,763.34345 231.64465,763.90841 C 213.71382,758.04827 199.35035,747.20836 188.72718,731.80259 C 178.1178,716.19679 173.26131,698.97795 174.18533,679.74601 C 176.20862,659.18294 183.75015,640.4076 196.79611,623.62002 C 210.05642,606.64625 226.36686,595.10886 245.72747,589.00783 L 236.79086,517.03732 C 204.14235,540.5122 177.24023,565.38857 155.85634,592.05266 C 134.48625,618.51673 122.37548,648.03162 119.32349,680.58353 C 118.71694,695.21445 120.7449,709.62515 125.42117,723.6156 C 130.08363,737.80609 137.65014,750.78998 148.09311,762.96737 C 169.19336,787.1359 197.85701,800.97248 233.66922,804.64946 C 245.9568,804.6933 259.14313,803.39219 273.42874,800.75994 L 253.15412,641.98044 z M 267.73035,640.97623 L 288.39876,796.96892 C 320.13628,786.69698 337.44053,760.75637 340.28393,719.5472 C 339.43155,705.61961 336.27671,692.94012 330.21782,681.46722 C 324.37326,669.80814 316.15723,660.39737 305.36919,653.22112 C 294.58117,646.04485 282.16857,641.97245 267.73035,640.97623 z M 240.97652,430.09347 C 247.87009,426.54918 255.97336,420.07342 264.87148,410.83853 C 273.75577,401.80367 282.56376,390.95461 291.06731,378.67754 C 299.7852,366.21426 306.91264,353.44025 312.44965,340.35552 C 317.97284,327.47082 321.04827,315.02021 321.84883,303.41763 C 322.1939,298.41652 322.13791,293.38773 321.43893,288.91757 C 321.1337,281.66062 319.31434,275.90719 315.76652,271.84344 C 312.20488,267.97974 307.53017,265.64723 301.51426,265.23213 C 289.4824,264.40196 278.14303,271.05643 267.49615,285.19557 C 259.19312,297.48648 251.92765,312.26093 246.32892,329.16035 C 240.51587,346.24598 236.72192,363.26995 235.12001,380.64614 C 234.75619,400.51973 236.84665,416.94472 240.97652,430.09347 z M 227.54252,440.82436 C 220.7547,407.79451 218.0189,374.44125 219.33512,340.7646 C 221.02637,319.17364 224.6263,299.12134 230.13492,280.60771 C 235.443,262.08026 242.37643,246.27791 250.96279,232.80059 C 259.34864,219.30942 268.703,209.30203 278.8254,202.76456 C 287.8899,196.95811 294.34101,193.98628 297.75004,194.2215 C 300.35693,194.40137 302.49376,195.5538 304.37484,197.49257 C 306.25592,199.43134 308.65578,202.61187 311.58822,206.83414 C 333.11869,242.2882 342.33476,283.92746 339.04967,331.53805 C 337.48995,354.14308 332.96368,375.94043 325.42943,397.53023 C 318.10954,418.93382 308.05121,439.14348 295.28207,457.75912 C 282.29861,476.56098 267.48927,492.62389 250.63973,506.13406 L 261.4444,586.07234 C 270.33676,585.68092 276.4079,585.29584 279.81692,585.53105 C 295.05727,586.58262 308.47251,590.72422 320.66425,597.99733 C 332.856,605.27046 343.09115,614.61953 351.15534,626.23078 C 359.23334,637.64199 365.19561,650.51519 369.04215,664.85037 C 372.68816,679.17172 374.28745,693.95485 373.23843,709.15822 C 371.6097,732.76348 363.90253,753.93935 350.13074,772.48581 C 336.35896,791.03227 316.72959,803.94864 291.02831,811.42115 C 291.95622,821.33401 293.78364,835.73089 296.73873,854.22552 C 299.47947,872.90635 301.47983,887.71712 302.73979,898.65786 C 303.99974,909.59862 304.08411,920.05632 303.38016,930.25857 C 302.28974,946.06218 297.51346,959.80229 289.0375,971.67927 C 280.36103,983.5424 269.27089,992.42505 255.56657,998.31336 C 242.06276,1004.2155 227.3899,1006.62 211.74849,1005.5407 C 189.69011,1004.0188 170.86705,996.48913 155.26549,983.15182 C 139.67775,969.61453 132.00003,952.402 132.66101,931.14185 C 133.91134,921.78137 136.7245,913.13158 141.31484,905.00644 C 145.90518,896.8813 151.7888,890.45337 159.16626,885.7365 C 166.35698,880.80571 174.77199,878.57239 184.23834,878.6226 C 192.05904,879.16223 199.32685,881.87464 206.05556,886.55989 C 212.56994,891.43129 217.78453,897.61996 221.48497,905.31218 C 224.98487,912.99057 226.62479,921.34461 226.01747,930.14655 C 225.2031,941.94918 220.50235,951.67462 211.91519,959.32299 C 203.32805,966.97136 192.81111,970.46672 180.57874,969.62261 L 175.96653,969.3044 C 182.95906,981.84671 195.36513,988.93363 213.21238,990.16507 C 222.23626,990.78767 231.59871,989.42374 241.07158,986.45942 C 250.75877,983.30886 258.92455,978.84733 265.98375,972.90252 C 273.04297,966.95762 277.92394,960.46055 280.22561,953.38354 C 284.20056,945.41695 286.59157,934.1251 287.57157,919.92194 C 288.23411,910.31982 287.89399,900.64853 286.75175,890.92184 C 285.59571,881.39523 283.65786,868.59871 280.9244,852.73232 C 278.17714,837.06602 276.19788,824.86961 275.15956,816.55712 C 262.92065,818.7276 250.37733,819.47011 237.34282,818.57075 C 215.48498,817.06258 195.13396,811.23643 176.30361,800.8923 C 157.47325,790.54817 141.28391,776.96931 127.54886,759.94186 C 114.01434,742.92824 103.82635,724.13556 97.012476,703.16372 C 90.385334,682.40576 87.637294,660.91049 88.955072,638.89176 C 91.165089,618.54256 96.327852,599.20109 104.81683,581.29511 C 113.3196,563.18906 123.75867,546.22163 136.32076,530.60666 C 148.88285,514.99169 161.74938,500.8047 174.90655,488.24575 C 188.25045,475.90066 205.66669,460.01763 227.54252,440.82436 z";
+  var CLEF_TRANSFORM = "matrix(0.15,0,0,0.15,64.705,7.912)";
+  var SEMITONE = { C: 0, "C#": 1, D: 2, "D#": 3, E: 4, F: 5, "F#": 6, G: 7, "G#": 8, A: 9, "A#": 10, B: 11 };
+  var LETTER_IDX = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6 };
+
+  function el(name, attrs) {
+    var e = document.createElementNS(svgNS, name);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+  function clearSvg() {
+    while (staffSvg.firstChild) staffSvg.removeChild(staffSvg.firstChild);
+  }
+  function drawStaffLines() {
+    clearSvg();
+    for (var i = 0; i < LINE_Y.length; i++) {
+      staffSvg.appendChild(el("line", { x1: 70, x2: 560, y1: LINE_Y[i], y2: LINE_Y[i], class: "staff-line" }));
+    }
+    staffSvg.appendChild(el("path", { d: TREBLE_CLEF_D, transform: CLEF_TRANSFORM, class: "clef" }));
+  }
+  function ledgerSteps(step) {
+    var steps = [];
+    if (step <= -2) {
+      for (var s = -2; s >= step; s -= 2) steps.push(s);
+    } else if (step >= 10) {
+      for (var s2 = 10; s2 <= step; s2 += 2) steps.push(s2);
+    }
+    return steps;
+  }
+  // Diatonisk trinn ut fra bokstav+oktav (samme formel som index.html sin parseNote,
+  // men uten avhengighet av "#"-parsing siden vi allerede har bokstav/oktav separat).
+  function diatonicStep(letter, octave) {
+    var value = octave * 7 + LETTER_IDX[letter];
+    return value - 30; // E4 bunnlinje = 0
+  }
+  function drawNoteheadAt(letter, accidentalSymbol, octave, cx, index) {
+    var step = diatonicStep(letter, octave);
+    var y = BASE_Y - step * STEP_PX;
+    var lw = state.scale.length > 7 ? 14 : 20;
+    var g = el("g", {});
+
+    ledgerSteps(step).forEach(function (s) {
+      var ly = BASE_Y - s * STEP_PX;
+      g.appendChild(el("line", { x1: cx - lw, x2: cx + lw, y1: ly, y2: ly, class: "ledger" }));
+    });
+    if (accidentalSymbol) {
+      var glyph = accidentalSymbol === "#" ? "♯" : accidentalSymbol === "b" ? "♭" : accidentalSymbol;
+      var acc = el("text", { x: cx - lw - 12, y: y + 7, "font-size": 24, class: "accidental" });
+      acc.textContent = glyph;
+      g.appendChild(acc);
+    }
+    var head = el("ellipse", {
+      cx: cx, cy: y, rx: 11, ry: 8,
+      class: "notehead", transform: "rotate(-18 " + cx + " " + y + ")",
+      tabindex: "0", role: "button",
+      "aria-label": "Spill av tone " + index
+    });
+    head.dataset.index = index;
+    g.appendChild(head);
+    // Litt større, usynlig treffflate rundt noten – lettere å treffe på iPad.
+    var hit = el("circle", { cx: cx, cy: y, r: 17, class: "note-hit-area" });
+    hit.dataset.index = index;
+    g.appendChild(hit);
+
+    staffSvg.appendChild(g);
+    return head;
+  }
+
+  function drawScaleOnStaff() {
+    drawStaffLines();
+    var n = state.scale.length;
+    var xStart = 110, xEnd = 560;
+    var spacing = n > 1 ? (xEnd - xStart) / (n - 1) : 0;
+    var heads = [];
+    state.scale.forEach(function (note, i) {
+      var cx = xStart + spacing * i;
+      var symbol = note.name.length > 1 ? note.name.slice(1) : "";
+      heads.push(drawNoteheadAt(note.name[0], symbol, note.octave, cx, i));
+    });
+    return heads;
+  }
+
+  // ---------- LYD (gjenbruker samme messing-syntese som index.html) ----------
+  var audioCtx = null;
+  function getAudioCtx() {
+    if (!audioCtx) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AC();
+    }
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    return audioCtx;
+  }
+  var trumpetWave = null;
+  function getTrumpetWave(ctx) {
+    if (trumpetWave) return trumpetWave;
+    var amps = [0, 1, 0.85, 0.65, 0.55, 0.4, 0.28, 0.2, 0.14, 0.09, 0.06];
+    var real = new Float32Array(amps.length);
+    var imag = new Float32Array(amps.length);
+    for (var i = 1; i < amps.length; i++) imag[i] = amps[i];
+    trumpetWave = ctx.createPeriodicWave(real, imag, { disableNormalization: false });
+    return trumpetWave;
+  }
+  function midiToFreq(midi) {
+    return 440 * Math.pow(2, (midi - 69) / 12);
+  }
+  function playFrequency(ctx, freq, startTime, duration) {
+    var osc = ctx.createOscillator();
+    var filter = ctx.createBiquadFilter();
+    var gain = ctx.createGain();
+    osc.setPeriodicWave(getTrumpetWave(ctx));
+    osc.frequency.value = freq;
+    filter.type = "lowpass";
+    filter.Q.value = 0.7;
+    filter.frequency.setValueAtTime(freq * 2.2, startTime);
+    filter.frequency.linearRampToValueAtTime(freq * 5, startTime + 0.04);
+    gain.gain.setValueAtTime(0, startTime);
+    gain.gain.linearRampToValueAtTime(0.19, startTime + 0.03);
+    gain.gain.linearRampToValueAtTime(0.19, Math.max(startTime + 0.03, startTime + duration - 0.06));
+    gain.gain.linearRampToValueAtTime(0, startTime + duration);
+    osc.connect(filter).connect(gain).connect(ctx.destination);
+    osc.start(startTime);
+    osc.stop(startTime + duration + 0.02);
+  }
+  // Kornett er et Bb-instrument: klingende tone = skrevet MIDI - 2 halvtoner,
+  // uavhengig av "skrevet/klingende"-visningsbryteren (den styrer kun tekst).
+  function playNote(note, duration) {
+    var ctx = getAudioCtx();
+    playFrequency(ctx, midiToFreq(note.midi - 2), ctx.currentTime + 0.03, duration || 0.7);
+  }
+
+  var playbackTimer = null;
+  function stopScalePlayback() {
+    if (playbackTimer) {
+      playbackTimer.forEach(function (id) { clearTimeout(id); });
+      playbackTimer = null;
+    }
+    setPlayingIndex(-1);
+    playScaleBtn.textContent = "▶ Spill opp og ned";
+  }
+  function setPlayingIndex(i) {
+    noteRow.querySelectorAll(".note-col").forEach(function (colEl, idx) {
+      colEl.classList.toggle("playing", idx === i);
+    });
+    staffSvg.querySelectorAll(".notehead").forEach(function (headEl, idx) {
+      headEl.classList.toggle("playing", idx === i);
+    });
+  }
+  function playScaleUpAndDown() {
+    if (playbackTimer) {
+      stopScalePlayback();
+      return;
+    }
+    var ctx = getAudioCtx();
+    var beatSec = 60 / state.tempoBpm;
+    var sequence = state.scale.concat(state.scale.slice(0, -1).reverse());
+    playbackTimer = [];
+    playScaleBtn.textContent = "■ Stopp";
+    sequence.forEach(function (note, i) {
+      playbackTimer.push(setTimeout(function () {
+        setPlayingIndex(i < state.scale.length ? i : state.scale.length - 1 - (i - state.scale.length) - 1);
+        playFrequency(ctx, midiToFreq(note.midi - 2), ctx.currentTime + 0.02, beatSec * 0.85);
+      }, i * beatSec * 1000));
+    });
+    playbackTimer.push(setTimeout(stopScalePlayback, sequence.length * beatSec * 1000));
+  }
+
+  // ---------- VENTILDIAGRAM + TONERAD ----------
+  function valveDiagram(fingering) {
+    var wrap = document.createElement("div");
+    wrap.className = "valves";
+    wrap.setAttribute("aria-label", fingering ? "Ventiler " + valveLabel(fingering.valves) : "Ukjent fingersetting");
+    [1, 2, 3].forEach(function (v) {
+      var dot = document.createElement("span");
+      dot.className = "valve" + (fingering && fingering.valves.indexOf(v) !== -1 ? " pressed" : "");
+      wrap.appendChild(dot);
+    });
+    return wrap;
+  }
+  function valveLabel(valves) {
+    return valves.length === 0 ? "0" : valves.slice().sort().join("");
+  }
+
+  function displayNameFor(index) {
+    // "Klingende" bytter kun tekst-visningen (navn/oktav), ikke fingersetting/lyd.
+    if (state.display === "written" || !state.soundingScale) {
+      return state.scale[index].name + subOctave(state.scale[index].octave);
+    }
+    var sn = state.soundingScale[index];
+    return sn.name + subOctave(sn.octave);
+  }
+  function subOctave(octave) {
+    return octave; // enkel tekst-variant (ingen <sub>-styling nødvendig i denne visningen)
+  }
+
+  function renderNoteRow() {
+    noteRow.innerHTML = "";
+    state.scale.forEach(function (note, i) {
+      var col = document.createElement("div");
+      col.className = "note-col";
+      col.tabIndex = 0;
+      col.dataset.index = i;
+      col.setAttribute("role", "button");
+      col.setAttribute("aria-label", "Spill av " + note.name + note.octave);
+
+      var label = document.createElement("div");
+      label.className = "note-col-label";
+      label.textContent = displayNameFor(i);
+      col.appendChild(label);
+      col.appendChild(valveDiagram(note.fingering));
+
+      if (note.fingering && note.fingering.altValves) {
+        var alt = document.createElement("div");
+        alt.className = "valve-alt-hint";
+        alt.textContent = "(el. " + valveLabel(note.fingering.altValves) + ")";
+        col.appendChild(alt);
+      }
+
+      col.addEventListener("click", function () { playNote(note); setFlashIndex(i); });
+      col.addEventListener("keydown", function (e) {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          playNote(note);
+          setFlashIndex(i);
+        }
+      });
+      noteRow.appendChild(col);
+    });
+  }
+  function setFlashIndex(i) {
+    setPlayingIndex(i);
+    setTimeout(function () {
+      if (!playbackTimer) setPlayingIndex(-1);
+    }, 400);
+  }
+
+  // ---------- OPPDATER HELE VISNINGEN ----------
+  function updateRootOptions() {
+    var roots = ROOTS_BY_SCALE_TYPE[state.scaleType];
+    rootSelect.innerHTML = "";
+    roots.forEach(function (r) {
+      var opt = document.createElement("option");
+      opt.value = r;
+      opt.textContent = r;
+      rootSelect.appendChild(opt);
+    });
+    if (roots.indexOf(state.root) === -1) state.root = roots[0];
+    rootSelect.value = state.root;
+  }
+
+  function updateHeading() {
+    var typeLabel = SCALE_TYPE_LABELS[state.scaleType];
+    if (state.display === "written") {
+      keyHeading.textContent = state.root + "-" + typeLabel;
+      keySubheading.textContent = "skrevet for Bb-kornett";
+    } else {
+      var soundingKey = MT.soundingKeyFor(state.root);
+      keyHeading.textContent = (soundingKey || state.root) + "-" + typeLabel;
+      keySubheading.textContent = "klingende";
+    }
+  }
+
+  function rebuildScale() {
+    stopScalePlayback();
+    state.scale = MT.generateScaleWithOctaves(state.root, state.scaleType, 4);
+    var soundingRoot = MT.soundingKeyFor(state.root);
+    if (soundingRoot) {
+      var writtenRootMidi = state.scale[0].midi;
+      var soundingRootMidi = writtenRootMidi - 2;
+      var soundingStartOctave = Math.floor(soundingRootMidi / 12) - 1;
+      state.soundingScale = MT.generateScaleWithOctaves(soundingRoot, state.scaleType, soundingStartOctave);
+    } else {
+      state.soundingScale = null;
+    }
+    updateHeading();
+    drawScaleOnStaff();
+    renderNoteRow();
+    wireStaffClicks();
+  }
+
+  function wireStaffClicks() {
+    staffSvg.querySelectorAll("[data-index]").forEach(function (elm) {
+      elm.addEventListener("click", function () {
+        var i = parseInt(elm.dataset.index, 10);
+        playNote(state.scale[i]);
+        setFlashIndex(i);
+      });
+    });
+  }
+
+  // ---------- EVENTS ----------
+  scaleTypeSelect.addEventListener("change", function () {
+    state.scaleType = scaleTypeSelect.value;
+    updateRootOptions();
+    rebuildScale();
+  });
+  rootSelect.addEventListener("change", function () {
+    state.root = rootSelect.value;
+    rebuildScale();
+  });
+  playScaleBtn.addEventListener("click", playScaleUpAndDown);
+  writtenToggleBtn.addEventListener("click", function () {
+    state.display = "written";
+    writtenToggleBtn.classList.add("active");
+    soundingToggleBtn.classList.remove("active");
+    updateHeading();
+    renderNoteRow();
+  });
+  soundingToggleBtn.addEventListener("click", function () {
+    state.display = "sounding";
+    soundingToggleBtn.classList.add("active");
+    writtenToggleBtn.classList.remove("active");
+    updateHeading();
+    renderNoteRow();
+  });
+  tempoRange.addEventListener("input", function () {
+    state.tempoBpm = parseInt(tempoRange.value, 10);
+    tempoLabel.textContent = state.tempoBpm + " BPM";
+  });
+
+  // ---------- START ----------
+  updateRootOptions();
+  rebuildScale();
+})();
+</script>
+</body>
+</html>
