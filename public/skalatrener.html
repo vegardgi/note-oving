@@ -22,6 +22,8 @@
     --muted-2:#5b6472;
     --green:#2ecc71;
     --green-glow:rgba(46,204,113,.85);
+    --red:#ff4d4d;
+    --red-glow:rgba(255,77,77,.85);
     --radius:18px;
   }
   *{box-sizing:border-box;}
@@ -238,6 +240,25 @@
     border-radius:8px;padding:10px 12px;
   }
 
+  /* ---------- GEHØRTRENING ---------- */
+  .ear-score{font-size:13px;color:var(--muted);margin-bottom:12px;}
+  .ear-score b{color:var(--paper);font-size:16px;}
+  .ear-answers{
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));
+    gap:8px;margin:16px 0;
+  }
+  .ear-answer-btn{
+    background:var(--ink-3);color:var(--paper);border:1px solid #3a4753;
+    padding:14px 8px;font-size:14px;font-weight:700;font-family:'JetBrains Mono',monospace;
+  }
+  .ear-answer-btn.correct{background:linear-gradient(180deg,var(--green),#1d8f4f);color:#0b2416;border-color:transparent;}
+  .ear-answer-btn.wrong{background:linear-gradient(180deg,var(--red),#a32b2b);color:#3a0e0e;border-color:transparent;}
+  .ear-feedback{
+    font-size:14px;font-weight:600;margin:6px 0 4px;min-height:20px;
+  }
+  .ear-feedback.correct{color:var(--green);}
+  .ear-feedback.wrong{color:var(--red);}
+
   /* ---------- NIVÅSTIGE ---------- */
   .level-list{display:flex;flex-direction:column;gap:10px;}
   .level-card{
@@ -293,6 +314,7 @@
     <button id="levelsTabBtn" type="button" role="tab" aria-selected="false">Nivåstige</button>
     <button id="sessionTabBtn" type="button" role="tab" aria-selected="false">Øvingsøkt</button>
     <button id="improvTabBtn" type="button" role="tab" aria-selected="false">Improvisasjon</button>
+    <button id="earTabBtn" type="button" role="tab" aria-selected="false">Gehørtrening</button>
   </div>
 
   <div id="explorerView">
@@ -413,6 +435,37 @@
     <div class="level-list" id="levelList"></div>
     <footer>
       <b>Slik virker det:</b> Nivåene låses opp ett om gangen. Trykk på en toneart for å øve den i utforskeren, og merk nivået som fullført når du er klar for neste. Ingen innlogging — fremdriften lagres kun i denne nettleseren.
+    </footer>
+  </div>
+
+  <div id="earView" style="display:none;">
+    <div class="controls" style="margin-bottom:16px;" id="earSetupControls">
+      <select id="earKeySelect" aria-label="Toneart"></select>
+      <select id="earScaleTypeSelect" aria-label="Skalatype">
+        <option value="majorPentatonic" selected>Dur-pentaton</option>
+        <option value="major">Dur</option>
+        <option value="minorPentatonic">Moll-pentaton</option>
+        <option value="blues">Blues</option>
+      </select>
+      <button id="earStartBtn" class="btn-start" type="button">▶ Start gehørtrening</button>
+    </div>
+
+    <div class="card" id="earCard" style="display:none;">
+      <div class="clip"></div>
+      <div class="ear-score">Poeng: <b id="earScoreText">0 av 0</b></div>
+      <div style="text-align:center;">
+        <button id="earPlayBtn" class="btn-start" type="button">🔊 Spill tone</button>
+      </div>
+      <div class="ear-answers" id="earAnswers"></div>
+      <div class="ear-feedback" id="earFeedback"></div>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+        <button id="earNextBtn" class="btn-stop" type="button" style="display:none;">Neste tone →</button>
+        <button id="earStopBtn" class="btn-stop" type="button">■ Avslutt</button>
+      </div>
+    </div>
+
+    <footer>
+      <b>Gehørtrening:</b> Velg toneart og skalatype, trykk «Spill tone», og gjett hvilken av tonene i skalaen du hørte. «Spill tone» kan trykkes flere ganger for å høre den igjen før du svarer.
     </footer>
   </div>
 
@@ -538,6 +591,20 @@
   var improvLabel = document.getElementById("improvLabel");
   var improvIdeaBtn = document.getElementById("improvIdeaBtn");
   var improvIdea = document.getElementById("improvIdea");
+
+  var earTabBtn = document.getElementById("earTabBtn");
+  var earView = document.getElementById("earView");
+  var earSetupControls = document.getElementById("earSetupControls");
+  var earKeySelect = document.getElementById("earKeySelect");
+  var earScaleTypeSelect = document.getElementById("earScaleTypeSelect");
+  var earStartBtn = document.getElementById("earStartBtn");
+  var earCard = document.getElementById("earCard");
+  var earScoreText = document.getElementById("earScoreText");
+  var earPlayBtn = document.getElementById("earPlayBtn");
+  var earAnswers = document.getElementById("earAnswers");
+  var earFeedback = document.getElementById("earFeedback");
+  var earNextBtn = document.getElementById("earNextBtn");
+  var earStopBtn = document.getElementById("earStopBtn");
 
   var scaleTypeSelect = document.getElementById("scaleTypeSelect");
   var rootSelect = document.getElementById("rootSelect");
@@ -946,20 +1013,25 @@
   function switchTab(name) {
     if (name !== "session" && sessionState.active) stopSession();
     if (name !== "improv" && improvState.active) stopImprov();
+    if (name !== "ear" && earState.active) stopEarTraining();
     var showExplorerCard = name === "explorer" || name === "session" || name === "improv";
     var isSession = name === "session";
     var isImprov = name === "improv";
+    var isEar = name === "ear";
     var isPlain = name === "explorer";
     explorerView.style.display = showExplorerCard ? "" : "none";
     levelsView.style.display = name === "levels" ? "" : "none";
+    earView.style.display = isEar ? "" : "none";
     explorerTabBtn.classList.toggle("active", isPlain);
     levelsTabBtn.classList.toggle("active", name === "levels");
     sessionTabBtn.classList.toggle("active", isSession);
     improvTabBtn.classList.toggle("active", isImprov);
+    earTabBtn.classList.toggle("active", isEar);
     explorerTabBtn.setAttribute("aria-selected", isPlain ? "true" : "false");
     levelsTabBtn.setAttribute("aria-selected", name === "levels" ? "true" : "false");
     sessionTabBtn.setAttribute("aria-selected", isSession ? "true" : "false");
     improvTabBtn.setAttribute("aria-selected", isImprov ? "true" : "false");
+    earTabBtn.setAttribute("aria-selected", isEar ? "true" : "false");
     sessionBanner.style.display = isSession ? "" : "none";
     improvBanner.style.display = isImprov ? "" : "none";
     scaleControls.style.display = isPlain ? (state.melodyRoot ? "none" : "") : "none";
@@ -973,6 +1045,7 @@
   levelsTabBtn.addEventListener("click", function () { switchTab("levels"); });
   sessionTabBtn.addEventListener("click", function () { switchTab("session"); });
   improvTabBtn.addEventListener("click", function () { switchTab("improv"); });
+  earTabBtn.addEventListener("click", function () { switchTab("ear"); });
 
   function updateControlsVisibility() {
     scaleControls.style.display = state.melodyRoot ? "none" : "";
@@ -1415,6 +1488,102 @@
     improvIdea.textContent = "💡 " + IMPROV_IDEAS[i];
     improvIdea.style.display = "";
   });
+
+  // ---------- GEHØRTRENING ----------
+  var earState = {
+    active: false, key: "C", scaleType: "majorPentatonic",
+    scale: [], targetIndex: -1, correctCount: 0, totalCount: 0, awaitingAnswer: false
+  };
+
+  function updateEarKeyOptions() {
+    var roots = ROOTS_BY_SCALE_TYPE[earScaleTypeSelect.value];
+    earKeySelect.innerHTML = "";
+    roots.forEach(function (r) {
+      var opt = document.createElement("option");
+      opt.value = r;
+      opt.textContent = r;
+      earKeySelect.appendChild(opt);
+    });
+    if (roots.indexOf(earState.key) === -1) earState.key = roots[0];
+    earKeySelect.value = earState.key;
+  }
+  earScaleTypeSelect.addEventListener("change", updateEarKeyOptions);
+
+  function updateEarScore() {
+    earScoreText.textContent = earState.correctCount + " av " + earState.totalCount;
+  }
+
+  function playEarTone() {
+    var note = earState.scale[earState.targetIndex];
+    playFrequency(getAudioCtx(), midiToFreq(note.midi - 2), getAudioCtx().currentTime + 0.03, 0.9);
+  }
+
+  function nextEarQuestion() {
+    earState.targetIndex = Math.floor(Math.random() * earState.scale.length);
+    earState.awaitingAnswer = true;
+    earFeedback.textContent = "";
+    earFeedback.className = "ear-feedback";
+    earNextBtn.style.display = "none";
+    renderEarAnswers();
+    playEarTone();
+  }
+
+  function renderEarAnswers() {
+    earAnswers.innerHTML = "";
+    earState.scale.forEach(function (note, i) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "ear-answer-btn";
+      btn.textContent = note.name + note.octave;
+      btn.addEventListener("click", function () { answerEarQuestion(i, btn); });
+      earAnswers.appendChild(btn);
+    });
+  }
+
+  function answerEarQuestion(guessIndex, btnEl) {
+    if (!earState.awaitingAnswer) return;
+    earState.awaitingAnswer = false;
+    earState.totalCount++;
+    var correct = guessIndex === earState.targetIndex;
+    if (correct) earState.correctCount++;
+    updateEarScore();
+
+    var allBtns = earAnswers.querySelectorAll(".ear-answer-btn");
+    allBtns[earState.targetIndex].classList.add("correct");
+    if (!correct) btnEl.classList.add("wrong");
+    Array.prototype.forEach.call(allBtns, function (b) { b.disabled = true; });
+
+    earFeedback.textContent = correct ? "✓ Riktig!" : "✗ Feil — riktig svar er merket grønt.";
+    earFeedback.className = "ear-feedback " + (correct ? "correct" : "wrong");
+    earNextBtn.style.display = "";
+  }
+
+  function startEarTraining() {
+    earState.key = earKeySelect.value;
+    earState.scaleType = earScaleTypeSelect.value;
+    earState.scale = MT.generateScaleWithOctaves(earState.key, earState.scaleType, 4);
+    earState.correctCount = 0;
+    earState.totalCount = 0;
+    earState.active = true;
+    updateEarScore();
+    earSetupControls.style.display = "none";
+    earCard.style.display = "";
+    nextEarQuestion();
+  }
+  function stopEarTraining() {
+    earState.active = false;
+    earState.awaitingAnswer = false;
+    earCard.style.display = "none";
+    earSetupControls.style.display = "";
+  }
+
+  earStartBtn.addEventListener("click", startEarTraining);
+  earPlayBtn.addEventListener("click", function () {
+    if (earState.active) playEarTone();
+  });
+  earNextBtn.addEventListener("click", nextEarQuestion);
+  earStopBtn.addEventListener("click", stopEarTraining);
+  updateEarKeyOptions();
 
   // ---------- START ----------
   updateRootOptions();
