@@ -1,0 +1,41 @@
+# Gjenbrukbar Fly-deploy. Kopier til <repo>/.github/workflows/deploy.yml
+# Krever: repo-secret FLY_API_TOKEN (fly tokens create deploy -a <app>)
+# Valgfritt staging: repo-variabel FLY_STAGING_APP (f.eks. pizzapappa-staging)
+#   -> push til branch "staging" deployer dit. Uten variabelen hoppes staging over.
+name: Deploy til Fly
+
+on:
+  push:
+    branches: [main, staging]
+  workflow_dispatch:
+  workflow_call:
+    secrets:
+      FLY_API_TOKEN:
+        required: true
+
+concurrency:
+  group: fly-deploy-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  prod:
+    if: github.ref_name == 'main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - run: flyctl deploy --remote-only --strategy rolling
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+  staging:
+    if: github.ref_name == 'staging' && vars.FLY_STAGING_APP != ''
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - run: flyctl deploy --remote-only --app "${{ vars.FLY_STAGING_APP }}"
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
